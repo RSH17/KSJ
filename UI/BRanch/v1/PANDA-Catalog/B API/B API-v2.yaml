@@ -1,0 +1,4372 @@
+openapi: 3.1.0
+
+info:
+  title: Booking API
+  description: This service is to manage bookings in Cargospot.
+  termsOfService: https://developer.champ.aero/terms
+  contact:
+    name: CHAMP Cargosystems
+    email: servicedesk@champ.aero
+  version: "v2"
+
+servers:
+- url: https://cargospot.champ.aero/booking/v2
+
+security:
+- ApiKeyAuth: []
+- ApiKeyAuth: []
+  BearerAuth: []
+
+tags:
+- name: "booking-controller"
+  description: "Create, update, search, retrieve and cancel booking in Cargospot."
+
+paths:
+  /bookings:
+    post:
+      tags:
+      - booking-controller
+      summary: Create new booking.
+      description: This service is to create a new booking in Cargospot.
+      operationId: createBooking  
+      requestBody:
+        description: Booking details.
+        content:
+         'application/json':
+            schema:
+              $ref: '#/components/schemas/BookingResource'
+        required: true
+
+      responses:
+        201:
+          description: Created
+          headers:
+            location:
+              description: URL of created resource
+              schema:
+                type: string
+          content: {}
+        400:
+          description: Bad Request (Invalid syntax)
+          content: {}
+        401:
+          description: Unauthorized (Authentication not done)
+          content: {}
+        403:
+          description: Forbidden (No access rights to the content)
+          content: {}
+        422:
+          description: Un-processable Entity (Semantic error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'     
+
+  /bookings/{id}:
+    put:
+      tags:
+      - booking-controller
+      summary: Update existing booking.
+      description: This service is to update an existing booking detail in Cargospot.
+      operationId: updateBooking
+      parameters:
+      - $ref: '#/components/parameters/if-match'
+      - name: id
+        in: path
+        description: Unique Cargospot internal ID for this booking. Example - 21252030.
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: Booking details.
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/UpdatedBookingResource'
+        required: true
+        
+      responses:
+        204:
+          description: No Content (Successful)
+          content: {}
+        400:
+          description: Bad Request (Invalid syntax)
+          content: {}
+        401:
+          description: Unauthorized (Authentication not done)
+          content: {}
+        403:
+          description: Forbidden (No access rights to the content)
+          content: {}
+        404:
+          description: Not found
+          content: {}
+        412:
+          description: Precondition Failed
+          content: {}
+        422:
+          description: Un processable Entity (Semantic error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      tags:
+      - booking-controller
+      summary: Get an existing booking by its technical id or by its waybill reference (000-00000000).
+      description: This service is to retrieve booking details by its technical id or by its waybill reference (000-00000000) from Cargospot. If more than one record exist in Cargospot for the air waybill, the latest record will be returned always.
+      operationId: RetrieveBookingByID
+      parameters:
+      - name: id
+        in: path
+        description: Unique Cargospot internal ID (technical id) for this booking (21252030) or its waybill reference (000-00000000).
+        required: true
+        schema:
+          type: string
+      - name: "fields"
+        in: "query"
+        description: "A comma separated list of fields required for partial representation. This can be used to embed optional fields that are not loaded by default in the json response representation. This API currently supports the fields listed in the enum. By default, those fields are not loaded. You need to pass fields=price (for example) to have it embedded it in the response."
+        schema:
+          type: "string"
+          example: "price"
+          enum:
+          - "price"
+          - "irregularities"
+          - "customs"
+          - "customsSecurityNotifications"
+          - "costs"
+          - "notes"
+      responses:
+        200:
+          description: OK
+          headers:
+            ETag:
+              description: HTTP entity tag to specify version of the product.
+              schema:
+                type: string
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/BookingDetails'
+        401:
+          description: Unauthorized (Authentication not done)
+          content: {}
+        403:
+          description: Forbidden (No access rights to the content)
+          content: {}
+        404:
+          description: Not found
+          content: {}
+        422:
+          description: Unprocessable Entity (Semantic error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'    
+
+  /bookings/{id}/cancellation-requests:
+    post:
+      tags: 
+      - booking-controller
+      summary: Cancel booking
+      description: This service is to cancel an existing booking in Cargospot.
+      operationId: cancelBooking
+      
+      parameters:
+      - $ref: '#/components/parameters/if-match'
+      
+      - name: id
+        in: path
+        description: 'Unique Cargospot internal ID for booking. Example - 212520304.'
+        required: true
+        schema:
+          type: string
+
+      responses:
+      
+        204:
+          description: No Content (Successful)
+          content: {}
+        401:
+          description: Unauthorized (Authentication not done)
+          content: {}
+        403:
+          description: Forbidden (No access rights to the content)
+          content: {}
+        404:
+          description: Not found
+          content: {}
+        412:
+          description: Precondition Failed
+          content: {}
+        422:
+          description: Un-processable Entity (Semantic error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'  
+  /bookings/charge-estimation-requests:
+    post:
+      tags:
+      - "booking-controller"
+      summary: "Charge estimation."
+      description: "This service is to retrieve the detailed charge estimation for\
+        \ a potential booking."
+      operationId: "chargeEstimation"
+      requestBody:
+        description: "Booking details."
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EstimationRequestDetails"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChargeEstimateWithCredit"
+        "400":
+          description: "Bad Request (Invalid syntax)"
+          content: {}
+        "401":
+          description: "Unauthorized (Authentication not done)"
+          content: {}
+        "403":
+          description: "Forbidden (No access rights to the content)"
+          content: {}
+        "422":
+          description: "Un-processable Entity (Semantic error)"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: "apiKey"
+      in: "header"
+      name: "apikey"
+    BearerAuth:
+      type: http
+      scheme: bearer
+
+  schemas:
+
+    BookingResource:
+      type: object
+      required:
+        - airWaybill
+        - originAirportCode
+        - destinationAirportCode
+        - pieces
+        - weight
+        - natureOfGoods
+        - segments
+      properties:
+      
+        issueCarrierCode:
+          type: string
+          description: 'Issuing carrier two- or three-character code. Specify this field only if the issuing carrier is different from the airline linked to air waybill prefix.'
+          example: 'XS'
+
+        airWaybill:
+          $ref: '#/components/schemas/AirWaybillResource'
+          
+        agentAccountNumber:
+          type: string
+          description: 'Unique identifier for the participant. This field is optional based on the airline specific configuration, otherwise it is mandatory. In case agentAccountNumber is optional for an airline the shipper details will become mandatory.'
+          example: "81470000009"        
+
+        originAirportCode:
+          type: string
+          description: 'Origin code is the 3-letter-IATA code of the airport.'
+          example: 'SIN'
+
+        destinationAirportCode:
+          type: string
+          description: 'Destination code is the 3-letter-IATA code of the airport.'
+          example: 'JFK'
+
+        shippersReferenceNumber:
+          type: string
+          description: 'The shipper or its agent may enter the appropriate optional shipping information as agreed upon with the issuing carrier.  The so-called SRN data will also be used in the C-IMP FWB message and in the CASS Billing Tape for accounting purposes.'
+          example: '8565856581'
+
+        salesAreaCode:
+          type: string
+          description: 'Sales area code to which the agent belongs. This region is normally the one stored against the agent details but can be different for a particular shipment.'
+          example: 'LHR'  
+
+        currencyCode:
+          type: string
+          description: 'Currency Code linked to the booking.'
+          example: 'SGD'  
+
+        shipmentChargeCode:
+          type: string
+          enum:
+            - CA
+            - CB
+            - CC
+            - CG
+            - CP
+            - CX
+            - NC
+            - PC
+            - PD
+            - PG
+            - PP
+            - PX
+            - XA
+            - XB
+          description: 'Charges type. Possible values are CA - Partial collect credit - Partial prepaid cash, CB - Partial collect credit - partial prepaid credit, CC - All charges collect, CG - All charges collect by GBL, CP - Destination collect cash, CX - Destination collect credit, NC - Service rate no charge, PC - Partial prepaid cash, PD - Partial prepaid credit, PG - All charges prepaid by GBL, PP - All charges prepaid cash, PX - All charges prepaid credit, XA - Exclude from agents invoice, XB - Exclude from both agent/consignee invoice. This parameter will only work with specific airline instances.'
+          example: 'PP'
+          
+        freightChargeType:
+          type: string
+          enum:
+            - Prepaid
+            - Collect
+          description: 'Code indicating whether payment will be made at origin (prepaid) or at destination (collect) for freight charges.'
+          default: Prepaid
+          example: "Prepaid"
+          
+        otherChargesType:
+          type: string
+          enum:
+            - Prepaid
+            - Collect          
+          description: 'Code indicating whether payment will be made at origin (prepaid) or at destination (collect) for other charges.'
+          default: Prepaid
+          example: "Collect"    
+
+        reference:
+          type: string
+          description: 'This field captures any airline internal or external reference to this booking.'
+          example: 'SPDQUOTE01MAY'   
+
+        customsOriginCode:
+          type: string
+          description: 'Customs origin code required for customs. Possible values are C - Goods in free circulation, T1 - Goods from outside the EU under customs control, T2 - EU goods not in free circulation (e.g. Tobacco, Spirit etc.), T2F - Goods originated from the Spanish isles, TD - Goods already under formal transit procedure  (e.g. T1, TIR, Carnet, ATA Carnet, NATO Form 2, etc.), TF- TF, X - Goods originated from the EU, destined for outside the EU but leaving EU from another EU country, DE - Domestic.'
+          example: 'C'
+
+        iataClassRuleCode:
+          type: string
+          description: 'IATA class value is used to decide if a surcharge or reduction needs to applied to an IATA general cargo rate/charge. Example: The IATA class value - VAL will usually result in the application of a 200% surcharge on the IATA general cargo rate/charge.'
+          example: 'VAL'
+
+        pieces:
+          type: integer
+          format: int32
+          description: 'Number of pieces.'
+          example: 2
+        
+        weight:
+          $ref: '#/components/schemas/Weight'
+
+        volume:
+          $ref: '#/components/schemas/Volume'
+
+        densityCode:
+          type: string
+          description: 'The density group code is used to determine the approximate volume. The correct volume will however have precedence. Possible values are 00 - Fruit, Vegetables, Leather; 01 - Tapes, Pharma, Typewriters; 02 - Flowers, Glassware, Toys; 03 - Clothing, Personal Effects, Rubber; 04 - Carpets, DIP, Radios, Plants; 05 - Automobiles, speakers, birds; 06 - Spares, cosmetics, instruments; 07 - Books, fish, metal products; 08 - Engines, meat, printed materials; 09 - Bearings, paint, valuables; 10 - Liquids, gold. Volume or desityCode will be mandatory for specific airlines based on the configuration in Cargospot.'
+          enum:
+            - '00'
+            - '01'
+            - '02'
+            - '03'
+            - '04'
+            - '05'
+            - '06'
+            - '07'
+            - '08'
+            - '09'
+            - '10'            
+          example: '00' 
+
+        chargeableWeight:
+          $ref: '#/components/schemas/ChargeableWeight'
+          
+        slac:
+          type: integer
+          format: int32
+          description: 'In case of a shipper-built unit (BUP), the piece count of the AWB is not reflecting the effective number of pieces of the consignment. For customs purposes, the actual number of pieces must be entered in this field. e.g. Piece count in AWB = 1 (1 ULD), SLAC = 55.'
+          example: 12
+
+        countOfUNNumbers:
+          type: integer
+          format: int32
+          description: 'To indicate the count of UN Numbers of a movement. The data can be used for invoicing purposes. If the other charges code RAC has to be calculated in the full air waybill data entry screen, the system will take this count of UN numbers to calculate the charges automatically.'
+          example: 2
+
+        natureOfGoods:
+          type: string
+          description: 'Description of the nature of goods.'
+          example: 'Live animal'
+
+        adhocPrice:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdhocPriceResource'  
+
+        movementPriority:
+          type: string
+          description: 'Indicates a specific priority for carriage. The standard priority codes include - Consignment Under Bond (B), Express Parcel Shipment (E), Express Shipments (X), High Priority (H), Low Priority (L), Service Shipment (S). This field also supports nonstandard priority codes (two-character alpha numeric) defined in Cargospot.'
+          example: '99'
+
+        dimensions:
+          $ref: '#/components/schemas/Dimensions'
+
+        otherCustomsAndSecurityInformation:
+            $ref: '#/components/schemas/OCI'          
+            
+        segments:
+          type: array
+          items:             
+            $ref: '#/components/schemas/Segment'
+
+        ULDs:
+          description: 'Specify the ULD information each line in the array corresponds to information about one specific ULD type with one or more units. Use this object only if the same set of ULDs are carried across all flights. Only specify the ULD information either at booking or segment level, not both. ULD information should be sent in the booking or segment level depending on the configuration within the airline instance.'
+          type: array
+          items:
+            $ref: '#/components/schemas/ULD'            
+
+        shipper:
+          $ref: '#/components/schemas/ParticipantResource'
+
+        emergencyContact:
+          $ref: '#/components/schemas/EmergencyContact'
+
+        consignee:
+          $ref: '#/components/schemas/ParticipantResource'
+
+        specialHandlingCodes:
+          type: array
+          maxItems: 9
+          items:
+            type: string
+            description: 'Special handling code to identify type of cargo.' 
+            example: 'AVI'
+
+        productCode:
+          type: string
+          description: 'Product code that exists in Cargospot. Product describes a service offering from an airline. It encapsulates various additional services that the airline will undertake while transporting the shipment.'
+          example: 'Express'   
+
+        priceClassCode: 
+          type: string
+          description: 'Price class code (rating specific parameter) that exists in Cargospot.'
+          example: 'GENPAX'
+
+        handlingRemarks:
+          type: array
+          maxItems: 2
+          items:
+            type: string
+            description: 'Handling remarks. Maximum length is 65 characters.'
+            example: 'Shippers certification for live animals.'
+   
+        OSIRemarks:
+          type: array
+          maxItems: 2        
+          items:
+            type: string
+            description: 'Other service information. Maximum length is 65 characters.'
+            example: 'Must be stored upright'
+
+        remarks:
+          type: string
+          description: 'Booking remarks. Maximum length is 512 characters.'
+          example: 'Free text captured as remarks.'
+
+        iataNoteCode:
+          type: string
+          description: 'This parameter allows to specify that a particular IATA Note applies to the shipment. The note should be existing in Cargospot for the carrier. At this stage the application will not check if the note is applicable for the rate/class of the shipment nor whether it exists for the origin - destination pair of the shipment.'
+          example: 'PR01'
+
+        eAWB:
+          type: boolean
+          description: 'Indicates if the air waybill data capture is electronic and the processing of the air waybill will be done accordingly.'
+          example: false
+          
+        temperature:
+          type: array
+          items:
+            $ref: '#/components/schemas/Temperature'            
+          
+        bookingType:
+          type: string
+          description: 'Booking type. This parameter will only work with specific airline instances.'
+          example: 'U'
+
+        commodityCode:
+          type: string
+          description: 'Commodity code. This parameter will only work with specific airline instances.'
+          example: 'JX9'
+
+        containerCounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContainerCount'
+
+        includesShipperBuiltUnits:
+          type: boolean
+          description: 'Indicates whether this booking includes shipper-built units. True indicates that this booking includes shipper-built units. This parameter will only work with specific airline instances.'
+          example: False
+
+        dryIce:
+          type: array
+          items:
+            $ref: '#/components/schemas/DryIce'
+
+        avi:
+          $ref: '#/components/schemas/AVI'
+          
+        dangerousGoods:
+          $ref: '#/components/schemas/DGR'
+
+        ratingLines:
+          type: array
+          items:
+            $ref: '#/components/schemas/Iata'
+            
+        valueForCarriage:
+          type: number
+          format: float
+          description: 'The valuation charge. This parameter will only work with specific airline instances.'
+          example: 1.5
+
+        overSize:
+          type: boolean
+          description: 'To check whether the booking is oversized or not. False for not oversized. This parameter will only work with specific airline instances'
+          example: False
+
+        mustFly:
+          type: boolean
+          description: 'To check whether the booking is J priority or not. False if the shipment is not must fly. This parameter will only work with specific airline instances.'
+          example: False
+
+        breakDown:
+          type: boolean
+          description: 'Indicates whether this booking can be broken down. False indicates that the shipment cannot be broken down. This parameter will only work with specific airline instances.'
+          example: False
+
+        bookOnRemainingAllotmentSpace:
+          type: boolean
+          description: 'To check whether a new default booking is created or not. This parameter will only work with specific airline instances.'
+          example: False
+
+        softBookingId:
+          type: string
+          description: 'Soft booking ID. This parameter will only work with specific airline instances.'
+          example: '86655668'
+
+        deliveryCall:
+          type: boolean
+          description: 'User can request for a call back after the shipment is delivered. This parameter will only work with specific airline instances.'
+          example: False 
+
+        deliveryRemarks:
+          type: string
+          description: 'Delivery Remarks. This parameter will only work with specific airline instances.'
+          example: 'Deliver at door.'
+          
+        customsSecurityStatusCode:
+          $ref: 'https://api.swaggerhub.com/domains/CHAMP-Cargo-Systems/cargospot-components/v1#/components/schemas/CustomsSecurityStatusCode'
+          
+    AirWaybillResource:
+      type: object
+      required: 
+        - prefix
+      properties:  
+
+        referenceType:
+          type: string
+          enum:
+            - BOOK
+            - QUOTE
+            - AIR WAYBILL
+          description: 'Specify as BOOK or QUOTE for bookings to be created without serial number (this is a reserved feature). Use AIR WAYBILL if an air waybill number will be used to refer to this booking as part of this creation process.'
+          default: AIR WAYBILL
+          example: 'AIR WAYBILL'
+        
+        prefix:
+          type: string
+          description: 'Coded representation of an airline or type of cargo. For representing an airline use the three-character alphanumeric airline code.'
+          example: '950'
+
+        serial:
+          type: string
+          description: 'A serial number allocated by an airline to identify a particular air cargo shipment and the associated air waybill. This parameter should be included only if the reference type is AIR WAYBILL. This parameter should be left as blank if you need Cargospot to pick the next available serial number. Specific setup is needed in Cargospot for automated serial number generation.'
+          example: '10203045'
+
+        type:
+          type: string
+          enum:
+           - REVENUE
+           - SERVICE
+           - VOID
+           - NO INVOICE
+           - PREPARED
+           - NO FREIGHT
+           - STAFF
+           - CREDIT
+           - DEBIT
+           - BOOK CN
+          description: 'Field to show the type of the air waybill. Possible values are REVENUE - Revenue cargo shipment, SERVICE - Non revenue service shipment, VOID - Voided air waybill, NO INVOICE - Excludes such an air waybill from invoicing, PREPARED - Setup the air waybill in the same way as a REVENUE air waybill except that such a record is not included for invoicing, NO FREIGHT - Air waybill without freight charges but with other charges only, STAFF - Air waybill with staff reduction, CREDIT - A credit record (storno of already invoiced amount), DEBIT - A debit record (used to charge additional amounts after an initial invoice was already made), BOOK CN - When a booking is cancelled but the AWB should be kept (For this status, the air waybill number will be shown as free in the air waybill stock so the agent can use this air waybill number again). This is a reserved feature.'
+          example: SERVICE
+        
+        consolidation:
+          type: boolean
+          description: 'Flag to mark the air waybill as a consolidation i.e. has house air waybills associated to this air waybill. True indicates consolidation.'
+          default: false
+          example: true
+
+    Weight:
+      type: object
+      properties:
+        amount:
+          type: number
+          description: 'Weight.'
+          format: float
+          example: 3000
+        unit:
+          type: string
+          description: 'Weight unit. KG indicates Kilogram; LB indicates Pound.'
+          example: KG
+          enum:
+          - KG
+          - LB
+
+    Volume:
+      type: object
+      properties:
+        amount:
+          type: number
+          description: 'Volume. Volume will be mandatory for specific airlines based on the configuration in Cargospot.'
+          format: float
+          example: 24
+        unit:
+          type: string
+          description: 'Volume unit. MC indicates cubic metre; CF indicates cubic feet.'
+          example: MC
+          enum:
+          - MC
+          - CF
+
+    ChargeableWeight:
+      type: object
+      properties:
+        amount:
+          type: number
+          description: 'Chargeable weight. Cargospot will auto calculate if the value is not provided.'
+          format: float
+          example: 3000
+        unit:
+          type: string
+          description: 'Weight unit. KG indicates Kilogram; LB indicates Pound.'
+          example: KG
+          enum:
+          - KG
+          - LB
+
+    AdhocPriceResource:
+      type: object
+      description: 'For loose shipments, only one array item is expected unless there is a rate construction request. In the case of a rate construction request each array item will represent a unique ad hoc rate line. For ULD shipments each array item will correspond to a ULD.'
+      required:
+        - currencyCode
+        - rate
+          chargePerULD
+      properties:
+
+        originCode:
+          type: string
+          description: 'Origin code for this ad hoc rate line. This parameter should only be passed for rate construction.'
+          example: 'SIN'
+
+        destinationCode:
+          type: string
+          description: 'Destination code for this ad hoc rate line. This parameter should only be passed for rate construction.'
+          example: 'JFK'
+
+        allInRate:
+          type: boolean
+          description: 'Indicates that ad hoc rate includes with other charge amount or not. True - Ad hoc rate/kg includes with freight amount + Default Other charge amount. False indicates that rate includes only freight amount.'
+          example: false        
+
+        calculationWeightType:
+          type: string
+          enum:
+            - Chargeable          
+            - Gross
+          description: 'Code identifying a method to calculate selling total amount. Chargeable - Chargeable weight will be considered for calculation. Gross - Gross Weight will be considered for calculation.'
+          default: Chargeable
+          example: Gross 
+        
+        ULD:
+          $ref: '#/components/schemas/ULDForAdhocPrice'
+
+        currencyCode:
+          type: string
+          description: 'Currency code.'
+          example: 'SGD'    
+
+        rate:
+          type: number
+          format: float
+          description: 'Rate amount. If SGD is currency and KG is the booking weight unit then SGD/KG. This is mandatory if loose shipments.'
+          example: 42.5
+           
+        chargePerULD:
+          type: number
+          format: float
+          description: 'Charge per ULD. This is mandatory if ULD shipment.'
+          example: 60.00
+
+        ULDOverPivotRate:
+          type: number
+          format: float
+          description: 'ULD over pivot rate.'
+          example: 42.5     
+           
+        contact: 
+          type: string
+          description: 'Contact details of the requestor.'
+          example: '+65 80000002'
+          
+    ULDForAdhocPrice:
+      type: object
+      required:
+        - type
+          contourCode
+          contourCodeList
+      properties:
+        type:
+          type: string
+          description: 'ULD type. Type or contourCode or contourCodeList should be specified.'
+          example: 'PMC'
+        
+        number:
+          type: string
+          description: 'ULD reference number.'
+          example: 'PMC10006XS'
+
+        contourCode:
+          type: string
+          description: 'Contour code that exists in Cargospot. Code indicating the exact contour of a ULD including its footprint. Type or contourCode or contourCodeList should be specified.'
+          example: 'A2'
+          
+        contourCodeList:
+          type: string
+          description: 'Contour code list that exists in Cargospot. Contour code list is a group of contour codes. The Price is applicable to all the contour codes in the list. Type or contourCode or contourCodeList should be specified.'          
+          example: 'LDP'              
+
+    Dimensions:
+      type: object
+      properties:
+        measurements:
+          type: array
+          items:        
+            $ref: '#/components/schemas/Measurements'        
+        unit:
+          type: string
+          description: 'Unit for length, width and height. CMT indicates centimeters; INH indicates inches.'
+          enum: 
+           - CMT
+           - INH
+          default: CMT
+          example: 'CMT'
+      
+    UpdatedDimensions:
+      type: object
+      description: 'This object should be used to send two types of data - 1/ data available in the GET (retrieve) request that is sent back in the PUT request as-is and 2/ data available in the GET request that needs to be modified.'
+      properties:
+        measurements:
+          type: array
+          items:
+           anyOf:
+              - $ref: '#/components/schemas/Measurements'  
+              - $ref: '#/components/schemas/UpdatedMeasurements'
+            
+        unit:
+          type: string
+          description: 'Unit for length, width and height. CMT indicates centimeters; INH indicates inches.'
+          enum: 
+           - CMT
+           - INH
+          default: CMT
+          example: 'CMT'    
+
+    Measurements:
+      type: object
+      required:
+        - pieces
+        - length
+        - width
+        - height
+      properties:
+        pieces:
+          type: integer
+          format: int32
+          description: 'Pieces'
+          example: 1
+        weight:
+          $ref: '#/components/schemas/Weight'
+        length:
+          type: integer
+          format: int32
+          description: 'Length.'
+          example: 100
+        width:
+          type: integer
+          format: int32
+          description: 'Width.'
+          example: 80          
+        height:
+          type: integer
+          format: int32
+          description: 'Height.'
+          example: 60
+          
+    UpdatedMeasurements:
+      type: object
+      required:
+        - id
+        - pieces
+        - length
+        - width
+        - height
+      properties:
+        id:
+          type: string
+          description: 'Unique Cargospot internal ID for measurement.'
+          example: '31250'
+        pieces:
+          type: integer
+          format: int32
+          description: 'Pieces'
+          example: 1
+        weight:
+          $ref: '#/components/schemas/Weight'
+        length:
+          type: integer
+          format: int32
+          description: 'Length.'
+          example: 100
+        width:
+          type: integer
+          format: int32
+          description: 'Width.'
+          example: 80          
+        height:
+          type: integer
+          format: int32
+          description: 'Height.'
+          example: 60
+    
+    OCI:
+      type: object
+      properties:
+
+        otherCustomsInformation:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomsAndSecurityInformation'
+            
+        securityDeclarations:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomsAndSecurityInformation'
+    
+    UpdatedOCI:
+      type: object
+      properties:
+
+        otherCustomsInformation:
+          type: array
+          items:
+           anyOf:
+            - $ref: '#/components/schemas/CustomsAndSecurityInformation'
+            - $ref: '#/components/schemas/UpdatedCustomsAndSecurityInformation'
+            
+        securityDeclarations:
+          type: array
+          items:
+           anyOf:
+            - $ref: '#/components/schemas/CustomsAndSecurityInformation'
+            - $ref: '#/components/schemas/UpdatedCustomsAndSecurityInformation'
+
+    CustomsAndSecurityInformation:
+      type: object
+      required:
+        - countryCode
+          informationIdentifier
+          controlInformationCode
+        - supplementaryControlInformation
+      properties:
+        countryCode:
+          type: string
+          description: 'Country code. One of country code, informationIdentifier or controlInformationCode is mandatory.'
+          example: 'US'
+        
+        informationIdentifier:
+          type: string
+          description: 'OCI info ID that exists in Cargospot. This parameter allows 0 or 3 alpha characters. Examples: AGT, SSI, ABI. One of country code, informationIdentifier or controlInformationCode is mandatory.'
+          example: 'SSI'
+        
+        controlInformationCode:
+          type: string
+          description: 'Customs code used for transmitting/receiving OCI data. This parameter allows 0, 1, 2 or 3 alpha characters. Examples - SCO, CB, F. One of country code, informationIdentifier or controlInformationCode is mandatory.'
+          example: 'SPX'
+        
+        supplementaryControlInformation:
+          type: string
+          description: 'This parameter allow alpha-numeric characters, and a dash ( - ) and a dot ( . ) characters, with a maximum of 35 characters free text.'
+          example: 'Note for US - customs.'
+          
+    UpdatedCustomsAndSecurityInformation:
+      type: object
+      description: 'This object should be used to send two types of data - 1/ data available in the GET (retrieve) request that is sent back in the PUT request as-is and 2/ data available in the GET request that needs to be modified.'
+      required:
+        - id
+        - countryCode
+          informationIdentifier
+          controlInformationCode
+        - supplementaryControlInformation
+      properties:
+        id:
+          type: string
+          description: 'Unique Cargospot internal ID for customs and security information.'
+          example: '31250'
+        countryCode:
+          type: string
+          description: 'Country code. One of country code, informationIdentifier or controlInformationCode is mandatory.'
+          example: 'US'
+        
+        informationIdentifier:
+          type: string
+          description: 'OCI info ID that exists in Cargospot. This parameter allows 0 or 3 alpha characters. Examples: AGT, SSI, ABI. One of country code, informationIdentifier or controlInformationCode is mandatory.'
+          example: 'SSI'
+        
+        controlInformationCode:
+          type: string
+          description: 'Customs code used for transmitting/receiving OCI data. This parameter allows 0, 1, 2 or 3 alpha characters. Examples - SCO, CB, F. One of country code, informationIdentifier or controlInformationCode is mandatory.'
+          example: 'SPX'
+        
+        supplementaryControlInformation:
+          type: string
+          description: 'This parameter allow alpha-numeric characters, and a dash ( - ) and a dot ( . ) characters, with a maximum of 35 characters free text.'
+          example: 'Note for US - customs.'
+
+    Segment:
+      type: object
+      required: 
+        - originAirportCode
+        - destinationAirportCode
+        - transportMeans
+        - spaceAllocationCode
+        - pieces
+        - weight
+      properties:
+        originAirportCode:
+          type: string
+          description: 'Segment origin of this resource. Location at which cargo is loaded to this booking segment.'
+          example: 'SIN'
+          
+        destinationAirportCode:
+          type: string
+          description: 'Segment destination of this resource. Location at which cargo is offloaded from this booking segment.'
+          example: 'JFK'
+
+        transportMeans:
+          $ref: '#/components/schemas/TransportMeansResource'
+
+        spaceAllocationCode:
+          type: string
+          enum:
+            - CA
+            - HK
+            - HL
+            - HN
+            - KK
+            - LL
+            - NA
+            - NL
+            - NN
+            - SS
+            - UN
+            - UU
+            - QU
+            - KL
+            - KC
+            - LA
+            - XX
+          description: 'Space allocation codes used for booking. Possible values are CA - Space allocation against allotment, HK - Holding confirmed, HL - Holding Wait List, HN - Have requested space allocation, KK - Confirming, LL - Wait list, NA - Requesting space allocation; if not available will accept alternative, NL - Requesting space allocation; for wait list, NN - Requesting space allocation; will not accept alternative, SS - Reporting Sale, UN - No confirmation, UU - Unable to confirm space, QU - Unable to confirm queue to FCTL, KL - Wait list confirmed, KC - Wait list confirmed, LA - Stand by virtual pending confirm, XX - Cancel previous space allocation.'
+          example: 'NN'
+
+        allotmentCode:
+          type: string
+          description: 'Typically used to specify the allotment code if the space allocation code is CA.'
+          example: 'CSPALLOT81'
+
+        pieces:
+          type: integer
+          format: int32
+          description: 'Actual Pieces (total or part of the total pieces of the shipment) booked on the segment.'
+          example: 6
+
+        weight:
+          $ref: '#/components/schemas/Weight'
+
+        volume:
+          $ref: '#/components/schemas/Volume'
+
+        dryIcePieces:
+          type: integer
+          format: int32
+          description: "Number of pieces which the user plan to enter the Dry Ice weight. This parameter will only work with specific airline instances."
+          example: 1
+
+        dryIceWeight:
+          $ref: '#/components/schemas/DryIceWeight'
+          
+        ULDs:
+          description: 'Specify the ULD information each line in the array corresponds to information about one specific ULD contour with one or more units. Use this object to specify the ULD information carried on this specific segment. Only specify the ULD information either at booking or segment level, not both. ULD information should be sent in the booking or segment level depending on the configuration within the airline instance.'
+          type: array
+          items:
+            $ref: '#/components/schemas/ULD'
+            
+    UpdatedSegment:
+      type: object
+      description: 'This object should be used to send two types of data - 1/ data available in the GET (retrieve) request that is sent back in the PUT request as-is and 2/ data available in the GET request that needs to be modified.'
+      required: 
+        - id
+        - originAirportCode
+        - destinationAirportCode
+        - transportMeans
+        - spaceAllocationCode
+        - pieces
+        - weight
+      properties:
+        id:
+          type: string
+          description: 'Unique Cargospot internal ID for segment'
+          example: '31280'
+          
+        originAirportCode:
+          type: string
+          description: 'Segment origin of this resource. Location at which cargo is loaded to this booking segment.'
+          example: 'SIN'
+          
+        destinationAirportCode:
+          type: string
+          description: 'Segment destination of this resource. Location at which cargo is offloaded from this booking segment.'
+          example: 'JFK'
+
+        transportMeans:
+          $ref: '#/components/schemas/TransportMeansResource'
+
+        spaceAllocationCode:
+          type: string
+          enum:
+            - CA
+            - HK
+            - HL
+            - HN
+            - KK
+            - LL
+            - NA
+            - NL
+            - NN
+            - SS
+            - UN
+            - UU
+            - QU
+            - KL
+            - KC
+            - LA
+            - XX
+          description: 'Space allocation codes used for booking. Possible values are CA - Space allocation against allotment, HK - Holding confirmed, HL - Holding Wait List, HN - Have requested space allocation, KK - Confirming, LL - Wait list, NA - Requesting space allocation; if not available will accept alternative, NL - Requesting space allocation; for wait list, NN - Requesting space allocation; will not accept alternative, SS - Reporting Sale, UN - No confirmation, UU - Unable to confirm space, QU - Unable to confirm queue to FCTL, KL - Wait list confirmed, KC - Wait list confirmed, LA - Stand by virtual pending confirm, XX - Cancel previous space allocation.'
+          example: 'NN'
+
+        allotmentCode:
+          type: string
+          description: 'Typically used to specify the allotment code if the space allocation code is CA.'
+          example: 'CSPALLOT81'
+
+        pieces:
+          type: integer
+          format: int32
+          description: 'Actual Pieces (total or part of the total pieces of the shipment) booked on the segment.'
+          example: 6
+
+        weight:
+          $ref: '#/components/schemas/Weight'
+
+        volume:
+          $ref: '#/components/schemas/Volume'
+
+        dryIcePieces:
+          type: integer
+          format: int32
+          description: "Number of pieces which the user plan to enter the Dry Ice weight. This parameter will only work with specific airline instances."
+          example: 1
+
+        dryIceWeight:
+          $ref: '#/components/schemas/DryIceWeight'
+          
+        ULDs:
+          description: 'Specify the ULD information each line in the array corresponds to information about one specific ULD contour with one or more units. Use this object to specify the ULD information carried on this specific segment. Only specify the ULD information either at booking or segment level, not both. ULD information should be sent in the booking or segment level depending on the configuration within the airline instance.'
+          type: array
+          items:
+           anyOf:
+             - $ref: '#/components/schemas/ULD'
+             - $ref: '#/components/schemas/UpdatedULD'
+
+    TransportMeansResource:
+      type: object
+      required:
+        - carrierCode
+      properties:
+
+        carrierCode:
+          type: string
+          description: 'Coded identification approved by IATA for a carrier, linked to the transport means (flight/truck).'
+          example: 'XS'        
+
+        number:
+          type: string
+          description: 'Reference number for this transport (e.g. flight number). Format: nnn(n)(a). This is optional only for UXR.'
+          example: '481A'
+
+        date:
+          type: string
+          format: date
+          description: 'Reference date for this transport. Format: YYYY-MM-DD. This is optional only for UXR.'
+          example: '2020-09-06'
+
+    ULD:
+      type: object
+      required: 
+        - type
+          number
+        - bookedWeight
+      properties:
+        number:
+          type: string
+          description: 'Indicates the full ULD number that includes the ULD type (e.g. AKE), ULD number (e.g. 12345) and carrier code (e.g. XS). If the ULD number is not available this field can also just capture the ULD type. Either number or type should be specified.'
+          example: 'AKE48101XS'
+
+        type:
+          type: string
+          description: 'Customer defined ULD type code as available in the specific Cargospot instance. Either number or type should be specified.'
+          example: 'AKE'
+
+        count:
+          type: number
+          description: 'Count of ULDs linked to the value specified in either type or number.'
+          example: 1     
+
+        loadIndicator:
+          type: string
+          enum:
+            - M
+            - L
+            - N
+            - U
+            - R
+          description: 'Indicates where the ULD can be loaded on the airplane. Possible values M - Main deck loading only, N - Nose door loading only, L - ULD height below 160 centimetres, U - ULD height between 160 and 244 centimetres, R - ULD height above 244 centimetres.'
+          example: 'L'
+
+        bookedWeight:
+          $ref: '#/components/schemas/Weight'
+
+        bookedVolume:
+          $ref: '#/components/schemas/Volume'        
+
+        usedVolume:
+          $ref: '#/components/schemas/Volume'    
+
+        dryIceWeight:
+          $ref: '#/components/schemas/DryIceWeight' 
+
+        contourCode:
+          type: string
+          description: 'ULD contour code that exists in Cargospot. Code indicating the exact contour of a ULD including its footprint.'
+          example: 'Q6'
+          
+        shipperBuiltUnit:
+          type: boolean
+          description: 'Indicates if the container is shipper-built unit or not. This parameter will only work with specific airline instances.'
+          example: true
+    
+    UpdatedULD:
+      type: object
+      description: 'This object should be used to send two types of data - 1/ data available in the GET (retrieve) request that is sent back in the PUT request as-is and 2/ data available in the GET request that needs to be modified.'
+      required: 
+        - id
+        - type
+          number
+        - bookedWeight
+      properties:
+        id:
+          type: string
+          description: 'Unique Cargospot internal ID for ULD'
+          example: '718980'
+        number:
+          type: string
+          description: 'Indicates the full ULD number that includes the ULD type (e.g. AKE), ULD number (e.g. 12345) and carrier code (e.g. XS). If the ULD number is not available this field can also just capture the ULD type. Either number or type should be specified.'
+          example: 'AKE48101XS'
+
+        type:
+          type: string
+          description: 'Customer defined ULD type code as available in the specific Cargospot instance. Either number or type should be specified.'
+          example: 'AKE'
+
+        count:
+          type: number
+          description: 'Count of ULDs linked to the value specified in either type or number.'
+          example: 1     
+
+        loadIndicator:
+          type: string
+          enum:
+            - M
+            - L
+            - N
+            - U
+            - R
+          description: 'Indicates where the ULD can be loaded on the airplane. Possible values M - Main deck loading only, N - Nose door loading only, L - ULD height below 160 centimetres, U - ULD height between 160 and 244 centimetres, R - ULD height above 244 centimetres.'
+          example: 'L'
+
+        bookedWeight:
+          $ref: '#/components/schemas/Weight'
+
+        bookedVolume:
+          $ref: '#/components/schemas/Volume'        
+
+        usedVolume:
+          $ref: '#/components/schemas/Volume'    
+
+        dryIceWeight:
+          $ref: '#/components/schemas/DryIceWeight' 
+
+        contourCode:
+          type: string
+          description: 'ULD contour code that exists in Cargospot. Code indicating the exact contour of a ULD including its footprint.'
+          example: 'Q6'
+          
+        shipperBuiltUnit:
+          type: boolean
+          description: 'Indicates if the container is shipper-built unit or not. This parameter will only work with specific airline instances.'
+          example: true
+        
+    ParticipantResource:
+      type: object
+      description: 'Either accountNumber or name, city and address should be specified. Temporary participant will be created if accountNumber is not specified.'
+      properties:
+        accountNumber:
+          type: string
+          description: 'Unique identifier for the participant/shipper/consignee.'
+          example: "81470000009"
+          
+        name:
+          type: string
+          description: 'Name of the participant.'
+          example: 'CSP Freight Forwarders'
+          
+        additionalName:
+          type: string
+          description: 'Additional name information for the participant.'
+          example: 'CHAMP Cargosystems'
+
+        address:
+          $ref: '#/components/schemas/Address'
+          
+        contact:
+          $ref: '#/components/schemas/Contact'
+
+    Address:
+      type: object
+      required: 
+        - address
+        - city
+        - countryCode
+      description: 'Address information'
+      properties:
+        address:
+          type: string
+          description: 'Main address of the participant.'
+          example: 'St-21.'
+          
+        additionalAddress: 
+          type: string
+          description: 'Additional address of the participant.'
+          example: 'Cargo Complex'
+          
+        zipCode:
+          type: string
+          description: 'The postal code of the address (zip code for USA). E.g. 8004 - for an address in Zurich, Switzerland, 75064 - for a zip code in Texas, USA. This parameter is mandatory for countryCode US.'
+          example: '75064'
+
+        city:
+          type: string
+          description: 'City of the address of the participant.'
+          example: 'Austin'
+          
+        stateOrProvince:
+          type: string
+          description: 'State (for United States only) of the address of the participant. This parameter is mandatory for countryCode US.'
+          example: 'TX'
+          
+        countryCode:
+          type: string
+          description: 'ISO 2-letter country code. This indicates the country of the address of the participant.'
+          example: 'US'
+
+    Contact:
+      type: object
+      description: 'Participant contact information.'
+      properties:
+        phoneNumber:
+          type: string
+          description: 'Phone number of the participant.'
+          example: '631225656'
+          
+        faxNumber:
+          type: string
+          description: 'Fax number of the participant.'
+          example: '631225657'
+
+    EmergencyContact:
+      type: object
+      properties: 
+        name:
+          type: string
+          description: 'Name of the emergency contact person.'
+          example: 'Jackson'
+        phoneNumber:
+          type: string
+          description: 'Name of the emergency contact person.'
+          example: '+65 81234567'        
+        email:
+          type: string
+          description: 'Name of the emergency contact person.'
+          example: 'jack@champ.aero'
+          
+
+    Temperature:
+      type: object
+      description: 'Temperature range in degree Celsius.'
+      properties:
+        type:
+          type: string
+          enum:
+            - Product
+            - Storage
+          description: 'Type; product, storage temperature.'
+          example: 'Product'
+        minimum:
+          type: number
+          format: float
+          description: 'Minimum temperature in degree Celsius.'
+          example: âˆ’5.25
+        maximum:
+          type: number
+          format: float
+          description: 'Maximum temperature in degree Celsius.'
+          example: 5.25
+          
+    ContainerCount:
+      type: object
+      description: 'This parameter will only work with specific airline instances.'
+      properties:
+        containerCode:
+          type: string
+          enum:
+            - M
+            - L
+            - D
+            - C
+          description: 'Container code.'
+          example: 'M'
+          
+        count:
+          type: integer
+          format: int32
+          description: 'Count of containers.'
+          example: 2  
+
+    DryIceWeight:
+      type: object
+      properties:
+        amount:
+          type: number
+          description: 'Dry ice weight. This parameter will only work with specific airline instances.'
+          format: float
+          example: 3000
+        unit:
+          type: string
+          description: 'Weight unit. KG indicates Kilogram; LB indicates Pound.'
+          example: KG
+          enum:
+          - KG
+          - LB
+
+    DryIce:
+      type: object
+      properties:
+        pieces:
+          type: integer
+          format: int32
+          description: "Number of pieces which the user plan to enter the dry ice weight."
+          example: 1
+
+        weightPerPiece:
+          $ref: '#/components/schemas/Weight'
+          
+        totalWeight:
+          $ref: '#/components/schemas/Weight'
+          
+    UpdatedDryIce:
+      type: object
+      description: 'This object should be used to send two types of data - 1/ data available in the GET (retrieve) request that is sent back in the PUT request as-is and 2/ data available in the GET request that needs to be modified.'
+      required: 
+        - id
+        - totalWeight
+      properties:
+        id:
+          type: string
+          description: 'Unique Cargospot internal ID for dry ice.'
+          example: '7980'
+        pieces:
+          type: integer
+          format: int32
+          description: "Number of pieces which the user plan to enter the dry ice weight."
+          example: 1
+
+        weightPerPiece:
+          $ref: '#/components/schemas/Weight'
+          
+        totalWeight:
+          $ref: '#/components/schemas/Weight' 
+
+    AVI:
+      type: object
+      required:
+        - species
+      properties:
+        remark:
+          type: string
+          description: 'AVI Remark.'
+          example: 'Specific remarks for AVI handling.'
+        species:
+          type: array
+          items:
+            $ref: '#/components/schemas/Species'
+            
+    UpdatedAVI:
+      type: object
+      description: 'This object should be used to send two types of data - 1/ data available in the GET (retrieve) request that is sent back in the PUT request as-is and 2/ data available in the GET request that needs to be modified.'
+      required:
+        - id
+        - species
+      properties:
+        id:
+          type: string
+          description: 'Unique Cargospot internal ID for AVI'
+          example: '79809'
+        remark:
+          type: string
+          description: 'AVI Remark.'
+          example: 'Specific remarks for AVI handling.'
+        species:
+          type: array
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/Species'  
+              - $ref: '#/components/schemas/UpdatedSpecies'
+
+    Species:
+      type: object
+      required:
+        - name
+        - quantity
+      properties:
+        name:
+          type: string
+          description: 'Name of the species.'
+          example: 'Dog'
+        quantity:
+          type: integer
+          format: int32
+          description: 'Number.'
+          example: 6
+          
+    UpdatedSpecies:
+      type: object
+      required:
+        - id
+        - name
+        - quantity
+      properties:
+        id:
+          type: string
+          description: 'Unique Cargospot internal ID for species.'
+          example: '79809'
+        name:
+          type: string
+          description: 'Name of the species.'
+          example: 'Dog'
+        quantity:
+          type: integer
+          format: int32
+          description: 'Number.'
+          example: 6
+
+    DGR:
+      type: object
+      properties:
+        pieces:
+          type: integer
+          format: int32
+          description: 'Number of pieces.'
+          example: 3
+        shipper:
+          $ref: '#/components/schemas/ParticipantResource'
+        consignee:
+          $ref: '#/components/schemas/ParticipantResource'
+        signatureData:
+          $ref: '#/components/schemas/SignatureData'
+        airport:
+          $ref: '#/components/schemas/Airport'  
+        city:
+          $ref: '#/components/schemas/City'
+        contact:
+          $ref: '#/components/schemas/DGRContact'
+        authorization:
+          type: string
+          description: 'Authorization'
+          example: 'D4F5DDEJ5'
+        handlingInformation:
+          type: string
+          description: 'Handling information.'
+          example: 'Handle with care'
+        remark:
+          type: string
+          description: 'Remarks.'
+          example: 'DGR remarks'
+        passcode:
+          type: string
+          description: 'Passcode'
+          example: 'PC001'
+        dangerousGoodsDeclarations:
+          type: array
+          items:
+            $ref: '#/components/schemas/DangerousGoods'
+            
+    SignatureData:
+      type: object
+      properties:
+        signedBy:
+          type: string
+          description: 'Signature name.'
+          example: 'CSP agent'
+        signedOn:
+          type: string
+          format: datetime
+          description: 'Date and time of the signature.'
+          example: '2020-09-06T00:00:00.000Z'
+        job:
+          type: string
+          description: 'Job title.'
+          example: 'Branch head'
+
+    Airport:
+      type: object
+      properties:
+        code:
+          type: string
+          description: 'Code for the airport.'
+          example: 'SIN'
+        name:
+          type: string
+          description: 'Airport full name.'
+          example: 'Changi International Airport'
+
+    City:
+      type: object
+      properties:
+        code:
+          type: string
+          description: 'Code for the city.'
+          example: 'SIN'
+        name:
+          type: string
+          description: 'City name.'
+          example: 'Singapore'
+            
+    DGRContact:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        number:
+          type: string
+
+    DangerousGoods:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 'The dangerous goods validation id to identify this request object.'
+          example: "15639433"
+        dangerousGoodsCommodity:
+          $ref: '#/components/schemas/DangerousGoodsCommodity'
+        cargoAircraftOnly:
+          type: boolean
+          description: 'The dangerous goods is to be transported in cargo aircraft only.'
+          example: false
+        limitedQuantityOnly:
+          type: boolean
+          description: 'The dangerous goods is to be transported in limited quantity.'
+          example: false
+        quantity:
+          $ref: '#/components/schemas/DangerousGoodsQuantity'
+        package:
+          $ref: '#/components/schemas/DangerousGoodsPackage'
+        emergencyInformation:
+          $ref: '#/components/schemas/DangerousGoodsEmergencyInformation'
+        technicalName:
+          type: string
+          description: 'The dangerous goods tech name.'
+          example: 'N.O.S.'
+        otherRemark:
+          type: string
+          description: 'The dangerous goods other information.'
+          example: 'Other info'
+        specialProvisionCode:
+          type: string
+          description: 'The dangerous goods special provision code.'
+          example: 'A130'
+        authorization:
+          type: string
+          description: 'The dangerous goods authorizations.'
+          example: '1B'
+        
+    DangerousGoodsCommodity:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 'The dangerous goods commodity id.'
+          example: 'dgr001'
+        unNumber:
+          type: string
+          description: 'The dangerous goods un number.'
+          example: '0016'
+        class:
+          type: string
+          description: 'The DGR class.'
+          example: '8'        
+  
+    DangerousGoodsQuantity:
+      type: object
+      properties:
+        amount:
+          type: string
+          description: 'The dangerous goods quantity provided by the user.'
+          example: '0.01000'
+        unit:
+          type: string
+          description: 'The dangerous goods unit used in quantity.'
+          example: 'Liter'
+  
+    DangerousGoodsPackage:
+      type: object
+      properties:
+        pieces:
+          type: integer
+          format: int32
+          description: 'The dangerous goods packages count.'
+          example: 2
+        overpackNumber:
+          type: string
+          description: 'The dangerous goods overpack id.'
+          example: '01'
+        allInOneBoxNumber:
+          type: string
+          description: 'The dangerous goods all-in-one box id.'
+          example: '01'
+        code:
+          type: string
+          description: 'The dangerous goods packaging code.'
+          example: '4G'
+        message:
+          type: string
+          description: 'The dangerous goods packaging message.'
+          example: 'Paper bag'
+        remark:
+          type: string
+          description: 'The dangerous goods quantity and type of packaging.'
+          example: 'All packed in one wooden box. Q=0.9'  
+  
+    DangerousGoodsEmergencyInformation:
+      type: object
+      properties:
+        responseCode:
+          type: string
+          description: 'The dangerous goods emergency response code.'
+          example: '6CF'
+        responseInformation:
+          type: string
+          description: 'The dangerous goods emergency response information.'
+          example: 'Composite Package'
+        phone:
+          $ref: '#/components/schemas/DangerousGoodsEmergencyPhone'
+  
+    DangerousGoodsEmergencyPhone:
+      type: object
+      properties:
+        countryCode:
+          type: string
+          description: 'The dangerous goods emergency phone country code.'
+          example: 'SG'
+        phone:
+          type: string
+          description: 'The dangerous goods emergency phone number.'
+          example: '8277290'
+        extension:
+          type: string
+          description: 'The dangerous goods emergency phone extension.'
+          example: '333'
+
+    Iata:
+      type: object
+      description: 'This parameter will only work with specific airline instances.'
+      properties:
+        pieces:
+          type: integer
+          format: int32
+          description: 'pieces'
+          example: 1
+          
+        weight:
+          $ref: '#/components/schemas/Weight'
+          
+        service:
+          type: string
+          description: 'Service'
+          example: 'Service'
+          
+        class:
+           type: string
+           description: 'Class'
+           example: 'Class'
+           
+        commodity:
+           type: string
+           description: 'Commodity'
+           example: 'commodity'
+           
+        chargeableWeight:
+          $ref: '#/components/schemas/ChargeableWeight'
+          
+        rate:
+          $ref: '#/components/schemas/UpdatedAmountCharges'
+          
+        total:
+           $ref: '#/components/schemas/UpdatedAmountCharges'
+           
+        goodsType:
+           type: string
+           description: 'Goods type'
+           example: 'G'
+           
+        natureOfGoods:
+          type: string
+          description: 'Nature of Goods'
+          example: 'Nature of Goods 1'
+          
+        ULDType:
+          type: string
+          description: 'Type of the ULD.'
+          example: 'PMC'  
+          
+    UpdatedIata:
+      type: object
+      required:
+        - id
+        - pieces
+        - weight
+        - natureOfGoods
+      description: 'This parameter will only work with specific airline instances. This object should be used to send two types of data - 1/ data available in the GET (retrieve) request that is sent back in the PUT request as-is and 2/ data available in the GET request that needs to be modified.'
+      properties:
+        id:
+          type: string
+          description: 'Unique Cargospot internal ID for Iata.'
+          example: '7989899'
+        pieces:
+          type: integer
+          format: int32
+          description: 'pieces'
+          example: 1
+          
+        weight:
+          $ref: '#/components/schemas/Weight'
+          
+        service:
+          type: string
+          description: 'Service'
+          example: 'Service'
+          
+        class:
+           type: string
+           description: 'Class'
+           example: 'Class'
+           
+        commodity:
+           type: string
+           description: 'Commodity'
+           example: 'commodity'
+           
+        chargeableWeight:
+          $ref: '#/components/schemas/ChargeableWeight'
+          
+        rate:
+          $ref: '#/components/schemas/UpdatedAmountCharges'
+          
+        total:
+           $ref: '#/components/schemas/UpdatedAmountCharges'
+           
+        goodsType:
+           type: string
+           description: 'Goods type'
+           example: 'G'
+           
+        natureOfGoods:
+          type: string
+          description: 'Nature of Goods'
+          example: 'Nature of Goods 1'
+          
+        ULDType:
+          type: string
+          description: 'Type of the ULD.'
+          example: 'PMC'
+
+    UpdatedAmountCharges:
+      type: object
+      properties:
+        amount:
+          type: number
+          format: float
+          description: 'the amount in the specified unit'
+          example: 1205.5
+          
+        currencyCode:
+          type: string
+          description: 'Currency Code'
+          example: 'SGD'
+
+    UpdatedBookingResource:
+      type: object
+      required:
+        - airWaybill
+        - originAirportCode
+        - destinationAirportCode
+        - pieces
+        - weight
+        - natureOfGoods
+        - segments
+      properties:
+      
+        issueCarrierCode:
+          type: string
+          description: 'Issuing carrier two- or three-character code. Specify this field only if the issuing carrier is different from the airline linked to air waybill prefix.'
+          example: 'XS'
+
+        airWaybill:
+          $ref: '#/components/schemas/AirWaybillResource'
+          
+        agentAccountNumber:
+          type: string
+          description: 'Unique identifier for the participant. This field is optional based on the airline specific configuration, otherwise it is mandatory. In case agentAccountNumber is optional for an airline the shipper details will become mandatory.'
+          example: "81470000009"        
+
+        originAirportCode:
+          type: string
+          description: 'Origin code is the 3-letter-IATA code of the airport.'
+          example: 'SIN'
+
+        destinationAirportCode:
+          type: string
+          description: 'Destination code is the 3-letter-IATA code of the airport.'
+          example: 'JFK'
+
+        shippersReferenceNumber:
+          type: string
+          description: 'The shipper or its agent may enter the appropriate optional shipping information as agreed upon with the issuing carrier.  The so-called SRN data will also be used in the C-IMP FWB message and in the CASS Billing Tape for accounting purposes.'
+          example: '8565856581'
+
+        salesAreaCode:
+          type: string
+          description: 'Sales area code to which the agent belongs. This region is normally the one stored against the agent details but can be different for a particular shipment.'
+          example: 'LHR'  
+
+        currencyCode:
+          type: string
+          description: 'Currency Code linked to the booking.'
+          example: 'SGD'  
+
+        shipmentChargeCode:
+          type: string
+          enum:
+            - CA
+            - CB
+            - CC
+            - CG
+            - CP
+            - CX
+            - NC
+            - PC
+            - PD
+            - PG
+            - PP
+            - PX
+            - XA
+            - XB
+          description: 'Charges type. Possible values are CA - Partial collect credit - Partial prepaid cash, CB - Partial collect credit - partial prepaid credit, CC - All charges collect, CG - All charges collect by GBL, CP - Destination collect cash, CX - Destination collect credit, NC - Service rate no charge, PC - Partial prepaid cash, PD - Partial prepaid credit, PG - All charges prepaid by GBL, PP - All charges prepaid cash, PX - All charges prepaid credit, XA - Exclude from agents invoice, XB - Exclude from both agent/consignee invoice. This parameter will only work with specific airline instances.'
+          example: 'PP'
+          
+        freightChargeType:
+          type: string
+          enum:
+            - Prepaid
+            - Collect
+          description: 'Code indicating whether payment will be made at origin (prepaid) or at destination (collect) for freight charges.'
+          default: Prepaid
+          example: "Prepaid"
+          
+        otherChargesType:
+          type: string
+          enum:
+            - Prepaid
+            - Collect          
+          description: 'Code indicating whether payment will be made at origin (prepaid) or at destination (collect) for other charges.'
+          default: Prepaid
+          example: "Collect"    
+
+        reference:
+          type: string
+          description: 'This field captures any airline internal or external reference to this booking.'
+          example: 'SPDQUOTE01MAY'   
+
+        customsOriginCode:
+          type: string
+          description: 'Customs origin code required for customs. Possible values are C - Goods in free circulation, T1 - Goods from outside the EU under customs control, T2 - EU goods not in free circulation (e.g. Tobacco, Spirit etc.), T2F - Goods originated from the Spanish isles, TD - Goods already under formal transit procedure  (e.g. T1, TIR, Carnet, ATA Carnet, NATO Form 2, etc.), TF- TF, X - Goods originated from the EU, destined for outside the EU but leaving EU from another EU country, DE - Domestic.'
+          example: 'C'
+
+        iataClassRuleCode:
+          type: string
+          description: 'IATA class value is used to decide if a surcharge or reduction needs to applied to an IATA general cargo rate/charge. Example: The IATA class value - VAL will usually result in the application of a 200% surcharge on the IATA general cargo rate/charge.'
+          example: 'VAL'
+
+        pieces:
+          type: integer
+          format: int32
+          description: 'Number of pieces.'
+          example: 2
+        
+        weight:
+          $ref: '#/components/schemas/Weight'
+
+        volume:
+          $ref: '#/components/schemas/Volume'
+
+        densityCode:
+          type: string
+          description: 'The density group code is used to determine the approximate volume. The correct volume will however have precedence. Possible values are 00 - Fruit, Vegetables, Leather; 01 - Tapes, Pharma, Typewriters; 02 - Flowers, Glassware, Toys; 03 - Clothing, Personal Effects, Rubber; 04 - Carpets, DIP, Radios, Plants; 05 - Automobiles, speakers, birds; 06 - Spares, cosmetics, instruments; 07 - Books, fish, metal products; 08 - Engines, meat, printed materials; 09 - Bearings, paint, valuables; 10 - Liquids, gold. Volume or desityCode will be mandatory for specific airlines based on the configuration in Cargospot.'
+          enum:
+            - '00'
+            - '01'
+            - '02'
+            - '03'
+            - '04'
+            - '05'
+            - '06'
+            - '07'
+            - '08'
+            - '09'
+            - '10'            
+          example: '00' 
+
+        chargeableWeight:
+          $ref: '#/components/schemas/ChargeableWeight'
+          
+        slac:
+          type: integer
+          format: int32
+          description: 'In case of a shipper-built unit (BUP), the piece count of the AWB is not reflecting the effective number of pieces of the consignment. For customs purposes, the actual number of pieces must be entered in this field. e.g. Piece count in AWB = 1 (1 ULD), SLAC = 55.'
+          example: 12
+
+        countOfUNNumbers:
+          type: integer
+          format: int32
+          description: 'To indicate the amount of UN Numbers of a movement. The data can be used for invoicing purposes. If the other charges code RAC has to be calculated in the full air waybill data entry screen, the system will take the UN-Numbers entered in this field to calculate automatically this charge.'
+          example: 2
+
+        natureOfGoods:
+          type: string
+          description: 'Description of the nature of goods.'
+          example: 'Live animal'
+
+        adhocPrice:
+          type: array
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/UpdatedAdhocPriceResource'  
+              - $ref: '#/components/schemas/AdhocPriceResource'  
+
+        movementPriority:
+          type: string
+          description: 'Indicates a specific priority for carriage. The standard priority codes include - Consignment Under Bond (B), Express Parcel Shipment (E), Express Shipments (X), High Priority (H), Low Priority (L), Service Shipment (S). This field also supports nonstandard priority codes (two-character alpha numeric) defined in Cargospot.'
+          example: '99'
+
+        dimensions:
+           $ref: '#/components/schemas/UpdatedDimensions'
+
+        otherCustomsAndSecurityInformation:
+           $ref: '#/components/schemas/UpdatedOCI'
+            
+        segments:
+          type: array
+          items:
+           anyOf:
+            - $ref: '#/components/schemas/Segment'
+            - $ref: '#/components/schemas/UpdatedSegment'
+
+        ULDs:
+          description: 'Specify the ULD information each line in the array corresponds to information about one specific ULD type with one or more units. Use this object only if the same set of ULDs are carried across all flights. Only specify the ULD information either at booking or segment level, not both. ULD information should be sent in the booking or segment level depending on the configuration within the airline instance.'
+          type: array
+          items:
+           anyOf:
+            - $ref: '#/components/schemas/ULD'
+            - $ref: '#/components/schemas/UpdatedULD'
+
+        irregularities:
+          description: 'Optionally specify a list of new or modified irregularities for the shipment. New irregularities will be added the the existing list while modified irregularities will be updated. Missing irregularities will be removed from the existing list.'
+          type: array
+          items:
+            $ref: '#/components/schemas/NewOrUpdatedIrregularityResource'
+
+        notes:
+          description: 'An optional list of notes/remarks. Note that the timeStamp property is mapped to the Cargospot "update_date" value.'
+          type: array
+          items:
+            $ref: 'https://api.swaggerhub.com/domains/CHAMP-Cargo-Systems/cargospot-airline-request-components/v1#/components/schemas/Note'
+            
+        shipper:
+          $ref: '#/components/schemas/ParticipantResource'
+
+        emergencyContact:
+          $ref: '#/components/schemas/EmergencyContact'
+            
+
+        consignee:
+          $ref: '#/components/schemas/ParticipantResource'
+
+        specialHandlingCodes:
+          type: array
+          maxItems: 9
+          items:
+            type: string
+            description: 'Special handling code to identify type of cargo.' 
+            example: 'AVI'
+
+        productCode:
+          type: string
+          description: 'Product code that exists in Cargospot. Product describes a service offering from an airline. It encapsulates various additional services that the airline will undertake while transporting the shipment.'
+          example: 'Express'   
+
+        priceClassCode: 
+          type: string
+          description: 'Price class code (rating specific parameter) that exists in Cargospot.'
+          example: 'GENPAX'
+
+        handlingRemarks:
+          type: array
+          maxItems: 2
+          items:
+            type: string
+            description: 'Handling remarks. Maximum length is 65 characters.'
+            example: 'Shippers certification for live animals.'
+   
+        OSIRemarks:
+          type: array
+          maxItems: 2        
+          items:
+            type: string
+            description: 'Other service information. Maximum length is 65 characters.'
+            example: 'Must be stored upright'
+
+        remarks:
+          type: string
+          description: 'Booking remarks. Maximum length is 512 characters.'
+          example: 'Free text captured as remarks.'
+
+        iataNoteCode:
+          type: string
+          description: 'This parameter allows to specify that a particular IATA Note applies to the shipment. The note should be existing in Cargospot for the carrier. At this stage the application will not check if the note is applicable for the rate/class of the shipment nor whether it exists for the origin - destination pair of the shipment.'
+          example: 'PR01'
+
+        eAWB:
+          type: boolean
+          description: 'Indicates if the air waybill data capture is electronic and the processing of the air waybill will be done accordingly.'
+          example: false
+          
+        temperature:
+          type: array
+          items:
+            $ref: '#/components/schemas/Temperature'
+          
+        bookingType:
+          type: string
+          description: 'Booking type. This parameter will only work with specific airline instances.'
+          example: 'U'
+
+        commodityCode:
+          type: string
+          description: 'Commodity code. This parameter will only work with specific airline instances.'
+          example: 'JX9'
+
+        containerCounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContainerCount'
+
+        includesShipperBuiltUnits:
+          type: boolean
+          description: 'Indicates whether this booking includes shipper-built units. True indicates that this booking includes shipper-built units. This parameter will only work with specific airline instances.'
+          example: False
+
+        dryIce:
+          type: array
+          items:
+           anyOf:
+            - $ref: '#/components/schemas/DryIce'
+            - $ref: '#/components/schemas/UpdatedDryIce'
+
+        avi:         
+         oneOf:
+           - $ref: '#/components/schemas/AVI'
+           - $ref: '#/components/schemas/UpdatedAVI'
+          
+        dangerousGoods:
+          $ref: '#/components/schemas/DGR'
+
+        ratingLines:
+          type: array
+          items:
+           anyOf:
+            - $ref: '#/components/schemas/Iata'
+            - $ref: '#/components/schemas/UpdatedIata'
+
+
+        valueForCarriage:
+          type: number
+          format: float
+          description: 'The valuation charge. This parameter will only work with specific airline instances.'
+          example: 1.5
+
+        overSize:
+          type: boolean
+          description: 'To check whether the booking is oversized or not. False for not oversized. This parameter will only work with specific airline instances'
+          example: False
+
+        mustFly:
+          type: boolean
+          description: 'To check whether the booking is J priority or not. False if the shipment is not must fly. This parameter will only work with specific airline instances.'
+          example: False
+
+        breakDown:
+          type: boolean
+          description: 'Indicates whether this booking can be broken down. False indicates that the shipment cannot be broken down. This parameter will only work with specific airline instances.'
+          example: False
+
+        bookOnRemainingAllotmentSpace:
+          type: boolean
+          description: 'To check whether a new default booking is created or not. This parameter will only work with specific airline instances.'
+          example: False
+
+        softBookingId:
+          type: string
+          description: 'Soft booking ID. This parameter will only work with specific airline instances.'
+          example: '86655668'
+
+        deliveryCall:
+          type: boolean
+          description: 'User can request for a call back after the shipment is delivered. This parameter will only work with specific airline instances.'
+          example: False 
+
+        deliveryRemarks:
+          type: string
+          description: 'Delivery Remarks. This parameter will only work with specific airline instances.'
+          example: 'Deliver at door.'
+
+        customsSecurityStatusCode:
+          $ref: 'https://api.swaggerhub.com/domains/CHAMP-Cargo-Systems/cargospot-components/v1#/components/schemas/CustomsSecurityStatusCode'
+
+    UpdatedAdhocPriceResource:
+      type: object
+      description: 'For loose shipments, only one array item is expected unless there is a rate construction request. In the case of a rate construction request each array item will represent a unique ad hoc rate line. For ULD shipments each array item will correspond to a ULD. This object should be used to send two types of data - 1/ data available in the GET (retrieve) request that is sent back in the PUT request as-is and 2/ data available in the GET request that needs to be modified.'
+      required:
+        - id
+        - currencyCode
+        - rate
+          chargePerULD
+      properties:
+
+        id:
+          type: string
+          description: 'Unique Cargospot internal ID for Adhoc-price'
+          example: '31252030'
+
+        originCode:
+          type: string
+          description: 'Origin code for this ad hoc rate line. This parameter should only be passed for rate construction.'
+          example: 'SIN'
+
+        destinationCode:
+          type: string
+          description: 'Destination code for this ad hoc rate line. This parameter should only be passed for rate construction.'
+          example: 'JFK'
+
+        allInRate:
+          type: boolean
+          description: 'Indicates that ad hoc rate includes with other charge amount or not. True - Ad hoc rate/kg includes with freight amount + Default Other charge amount. False indicates that rate includes only freight amount.'
+          example: false        
+
+        calculationWeightType:
+          type: string
+          enum:
+            - Chargeable          
+            - Gross
+          description: 'Code identifying a method to calculate selling total amount. Chargeable - Chargeable weight will be considered for calculation. Gross - Gross Weight will be considered for calculation.'
+          default: Chargeable
+          example: Gross 
+        
+        ULD:
+          $ref: '#/components/schemas/ULDForAdhocPrice'
+
+        currencyCode:
+          type: string
+          description: 'Currency code.'
+          example: 'SGD'    
+
+        rate:
+          type: number
+          format: float
+          description: 'Rate amount. If SGD is currency and KG is the booking weight unit then SGD/KG. This is mandatory if loose shipments.'
+          example: 42.5
+           
+        chargePerULD:
+          type: number
+          format: float
+          description: 'Charge per ULD. This is mandatory if ULD shipment.'
+          example: 60.00
+
+        ULDOverPivotRate:
+          type: number
+          format: float
+          description: 'ULD over pivot rate.'
+          example: 42.5     
+           
+        contact: 
+          type: string
+          description: 'Contact details of the requestor.'
+          example: '+65 80000002'
+
+    BookingDetails:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 'Unique Cargospot internal ID for booking.'
+          example: '21252030'
+
+        airWaybill:
+          $ref: '#/components/schemas/AirWaybill'      
+
+        issueCarrier:
+          $ref: '#/components/schemas/Carrier'
+
+        origin:
+          $ref: '#/components/schemas/Location'        
+
+        destination:
+          $ref: '#/components/schemas/Location' 
+ 
+        shippersReferenceNumber:
+          type: string
+          description: 'The shipper or its agent may enter the appropriate optional shipping information as agreed upon with the issuing carrier.  The so-called SRN data will also be used in the C-IMP FWB message and in the CASS Billing Tape for accounting purposes.'
+          example: '8565856581'
+
+        agent:
+          $ref: '#/components/schemas/Agent'
+          
+        status:
+          type: string
+          description: 'Booking status.'
+          example: 'CONFIRMED'          
+
+        salesArea:
+          $ref: '#/components/schemas/SalesArea'     
+
+        currency:
+          $ref: '#/components/schemas/Currency'           
+
+        shipmentChargeCode:
+          type: string
+          enum:
+            - CA
+            - CB
+            - CC
+            - CG
+            - CP
+            - CX
+            - NC
+            - PC
+            - PD
+            - PG
+            - PP
+            - PX
+            - XA
+            - XB
+          description: 'Charges type. Possible values are CA - Partial collect credit - Partial prepaid cash, CB - Partial collect credit - partial prepaid credit, CC - All charges collect, CG - All charges collect by GBL, CP - Destination collect cash, CX - Destination collect credit, NC - Service rate no charge, PC - Partial prepaid cash, PD - Partial prepaid credit, PG - All charges prepaid by GBL, PP - All charges prepaid cash, PX - All charges prepaid credit, XA - Exclude from agents invoice, XB - Exclude from both agent/consignee invoice. This parameter will only work with specific airline instances.'
+          example: 'PP'
+
+        freightChargeType:
+          type: string
+          enum:
+            - Prepaid
+            - Collect
+          description: 'Code indicating whether payment will be made at origin (prepaid) or at destination (collect) for freight charegs.'
+          example: "Prepaid"
+          
+        otherChargesType:
+          type: string
+          enum:
+            - Prepaid
+            - Collect          
+          description: 'Code indicating whether payment will be made at origin (prepaid) or at destination (collect) for other charges.'
+          example: "Collect"              
+
+        reference:
+          type: string
+          description: 'This field captures any airline internal or external reference to this booking.'
+          example: 'SPDQUOTE01MAY'   
+
+        customsOriginCode:
+          type: string
+          description: 'Customs origin code required for customs. Possible values are C - Goods in free circulation, T1 - Goods from outside the EU under customs control, T2 - EU goods not in free circulation (e.g. Tobacco, Spirit etc.), T2F - Goods originated from the Spanish isles, TD - Goods already under formal transit procedure  (e.g. T1, TIR, Carnet, ATA Carnet, NATO Form 2, etc.), TF- TF, X - Goods originated from the EU, destined for outside the EU but leaving EU from another EU country, DE - Domestic.'
+          example: 'C'
+
+        iataClassRuleCode:
+          type: string
+          description: 'IATA class value is used to decide if a surcharge or reduction needs to applied to an IATA general cargo rate/charge. Example: The IATA class value - VAL will usually result in the application of a 200% surcharge on the IATA general cargo rate/charge.'
+          example: 'VAL'
+
+        pieces:
+          type: integer
+          format: int32
+          description: 'Number of pieces.'
+          example: 6
+        
+        weight:
+          $ref: '#/components/schemas/Weight'
+
+        volume:
+          $ref: '#/components/schemas/Volume'
+
+        densityCode:
+          type: string
+          description: 'The density group code is used to determine the approximate volume. The correct volume will however have precedence. Possible values are 00 - Fruit, Vegetables, Leather; 01 - Tapes, Pharma, Typewriters; 02 - Flowers, Glassware, Toys; 03 - Clothing, Personal Effects, Rubber; 04 - Carpets, DIP, Radios, Plants; 05 - Automobiles, speakers, birds; 06 - Spares, cosmetics, instruments; 07 - Books, fish, metal products; 08 - Engines, meat, printed materials; 09 - Bearings, paint, valuables; 10 - Liquids, gold.'
+          enum:
+            - '00'
+            - '01'
+            - '02'
+            - '03'
+            - '04'
+            - '05'
+            - '06'
+            - '07'
+            - '08'
+            - '09'
+            - '10'            
+          example: '00' 
+
+        chargeableWeight:
+          $ref: '#/components/schemas/ChargeableWeight'
+
+        slac:
+          type: integer
+          format: int32
+          description: 'In case of a shipper-built unit (BUP), the piece count of the AWB is not reflecting the effective number of pieces of the consignment. For customs purposes, the actual number of pieces must be entered in this field. e.g. Piece count in AWB = 1 (1 ULD), SLAC = 55.'
+          example: 12
+
+        countOfUNNumbers:
+          type: integer
+          format: int32
+          description: 'To indicate the count of UN Numbers of a movement. The data can be used for invoicing purposes. If the other charges code RAC has to be calculated in the full air waybill data entry screen, the system will take this count of UN numbers to calculate the charges automatically.'
+          example: 2
+
+        natureOfGoods:
+          type: string
+          description: 'Description of the nature of goods.'
+          example: 'Live animal'
+
+        adhocPrices:
+          type: 'array'
+          items:             
+            $ref: '#/components/schemas/AdhocPrice'
+
+        movementPriority:
+          type: string
+          description: 'Indicates a specific priority for carriage. The standard priority codes include - Consignment Under Bond (B), Express Parcel Shipment (E), Express Shipments (X), High Priority (H), Low Priority (L), Service Shipment (S). This field also supports nonstandard priority codes (two-character alpha numeric) defined in Cargospot.'
+          example: '99'
+
+        dimensions:
+          type: 'array'
+          items:
+            $ref: '#/components/schemas/DimensionsWithVolume'
+
+        otherCustomsAndSecurityInformation:
+            $ref: '#/components/schemas/OCIDetails'  
+
+        routing:
+          type: 'array'
+          items:             
+            $ref: '#/components/schemas/SegmentDetail'
+
+        ULDs:
+          description: 'Specify the ULD information each line in the array corresponds to information about one specific ULD type with one or more units. Use this object only if the same set of ULDs are carried across all flights. Only specify the ULD information either at booking or segment level, not both. ULD information should be sent in the booking or segment level depending on the configuration with in the airline instance.'
+          type: 'array'
+          items:
+            $ref: '#/components/schemas/ULDDetail'
+
+        irregularities:
+          description: 'Optional list of irregularities associated with this shipment. The list of irregularities will be added to the response if the "fields" query parameter contains the value "irregularities"'
+          type: 'array'
+          items:
+            $ref: '#/components/schemas/IrregularityResource'
+            
+        notes:
+          type: array
+          items:
+            $ref: 'https://api.swaggerhub.com/domains/CHAMP-Cargo-Systems/cargospot-airline-response-components/v1#/components/schemas/Note'
+        
+        costs:
+          type: 'array'
+          items:
+            $ref: '#/components/schemas/Cost'
+          
+        customs:
+          $ref: 'https://api.swaggerhub.com/domains/CHAMP-Cargo-Systems/cargospot-components/v1#/components/schemas/CustomsResource'
+
+        customsSecurityNotifications:
+          $ref: 'https://api.swaggerhub.com/domains/CHAMP-Cargo-Systems/cargospot-components/v1#/components/schemas/CustomsSecurityNotifications'
+        
+        customsSecurityStatusCode:
+          $ref: 'https://api.swaggerhub.com/domains/CHAMP-Cargo-Systems/cargospot-components/v1#/components/schemas/CustomsSecurityStatusCode'
+          
+        shipper:
+          $ref: '#/components/schemas/Participant'
+
+        emergencyContact:
+          $ref: '#/components/schemas/EmergencyContactDetails'
+
+        consignee:
+          $ref: '#/components/schemas/Participant'
+
+        specialHandlingCodes:
+          type: 'array'
+          items:
+            $ref: '#/components/schemas/SpecialHandlingCode'
+
+        excludeBookingRelease:
+          type: boolean
+          description: 'If true, the booking will retain its status and will be skipped for booking time limit releasing. This paramter will be available based on bookReleaseTime configuration in Cargospot.'
+          example: false
+
+        productCode:
+          type: string
+          description: 'Product code that exists in cargospot. Product describes a service offering from an airline. It encapsulates various additional services that the airline will undertake while transporting the shipment.'
+          example: 'Express' 
+
+        priceClassCode: 
+          type: string
+          description: 'Price class code (rating specific parameter) that exists in cargospot.'
+          example: 'GENPAX'
+
+        handlingRemarks:
+          type: array
+          items:
+            type: string
+            description: 'Handling remarks captured as part of booking creation or update.'            
+      
+        specialServiceRequest:
+          type: array
+          items:
+            $ref: '#/components/schemas/Remarks'                 
+   
+        OSIRemarks:
+          type: array
+          items:
+            type: string
+            description: 'Other serice information remarks captured as part of booking creation or update.'               
+
+        otherServiceInformation:
+          type: array
+          items:
+            $ref: '#/components/schemas/Remarks'  
+
+        remarks:
+          type: string
+          description: 'Booking remarks. Maximum length is 512 characters.'
+          example: 'Free text captured as remarks.' 
+          
+        iataNoteCode:
+          type: string
+          description: 'This parameter allows to specify that a particular IATA Note applies to the shipment. The note should be existing in Cargospot for the carrier. At this stage the application will not check if the note is applicable for the rate/class of the shipment nor whether it exists for the origin - destination pair of the shipment.'
+          example: 'PR01'          
+          
+        eAWB:
+          type: boolean
+          description: 'Indicates if the air waybill data capture is electronic and the processing of the air waybill will be done accordingly.'
+          example: false          
+          
+        temperature:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemperatureDetails'          
+
+        valueForCustoms:
+          type: number
+          format: float
+          description: 'Indicates the value of a shipment for Customs purposes.'
+          example: 1250000.00
+        
+        price:
+          $ref: '#/components/schemas/ChargeEstimate'
+
+        bidPriceEvaluation:
+          type: string
+          description: 'This flag shows the Bid Price Evaluation response from cargo revenue systems. Possible values are ERY - Evaluation Yes, ERN - Evaluation No, ARY - Additional Review Yes, ARN - Additional Review No, APP - Auto Approved, EVC - Evaluation Call sent, ADR - Additional Review Pending. This parameter will only work with specific airline instances and will be available only for configured airline users.'
+          example: 'ERY' 
+
+        bidPriceEvaluationRemarks:
+          type: string
+          description: 'Bid price evaluation remarks. This field contains the error response from cargo revenue systems when Cargospot sends an evaluation request. This parameter will only work with specific airline instances and will be available only for configured airline users.'
+          example: 'Evaluation Remark'
+
+        SPAAdhocIndicator:
+          type: boolean
+          description: 'Indicates if the air waybill have any SPA adhoc linked to it.'
+          example: false   
+          
+        bookingType:
+          type: string
+          description: 'Booking type. This parameter will only work with specific airline instances.'
+          example: 'U'   
+          
+        commodityCode:
+          type: string
+          description: 'Commodity code. This parameter will only work with specific airline instances.'
+          example: 'JX9'
+
+        containerCounts:
+          type: 'array'
+          items:
+            $ref: '#/components/schemas/ContainerCount'
+
+        includesShipperBuiltUnits:
+          type: boolean
+          description: 'Indicates whether this booking includes shipper built units. True indicates that this booking includes shipper built units. This parameter will only work with specific airline instances.'
+          example: False
+
+        dryIce:
+          type: array
+          items:
+            $ref: '#/components/schemas/DryIceDetails'
+
+        avi:
+          $ref: '#/components/schemas/AVIDetails'
+          
+        dangerousGoods:
+          $ref: '#/components/schemas/DGR'
+
+        ratingLines:
+          type: 'array'
+          items:
+            $ref: '#/components/schemas/IATADetails'
+            
+        valueForCarriage:
+          type: number
+          format: float
+          description: 'The declared value of carriage. This parameter will only work with specific airline instances.'
+          example: 5000
+
+        overSize:
+          type: boolean
+          description: 'To check whether the booking is oversized or not. False for not over sized. This parameter will only work with specific airline instances'
+          example: False
+
+        mustFly:
+          type: boolean
+          description: 'To check whether the booking is J priority or not. False if the shipment is not must fly. This parameter will only work with specific airline instances.'
+          example: False
+
+        breakDown:
+          type: boolean
+          description: 'Indicates whether this booking can be broken down. False indicates that the shipment cannot be broken down. This parameter will only work with specific airline instances.'
+          example: False
+
+        bookOnRemainingAllotmentSpace:
+          type: boolean
+          description: 'To check whether a new default booking is created or not. This parameter will only work with specific airline instances.'
+          example: False
+
+        softBookingId:
+          type: string
+          description: 'Soft booking ID. This parameter will only work with specific airline instances.'
+          example: '86655668'
+
+        deliveryCall:
+          type: boolean
+          description: 'User can request for a call back after the shipment is delivered. This parameter will only work with specific airline instances.'
+          example: False 
+
+        deliveryRemarks:
+          type: string
+          description: 'Delivery Remarks. This parameter will only work with specific airline instances.'
+          example: 'Devlier at door.'
+
+        createdOn:
+          type: string
+          format: dateTime
+          description: 'UTC Date and time in ISO8601 format when the booking is created.'
+          example: '2020-06-25T14:30:00.000Z'
+          
+        createdBy:
+          type: string
+          description: 'User info.'
+          example: 'SYSTEM'
+
+        modifiedOn:
+          type: string
+          format: dateTime
+          description: 'UTC Date and time in ISO8601 format when the booking is last modified.'
+          example: '2020-06-25T14:30:00.000Z'
+
+        modifiedBy:
+          type: string
+          description: 'User info.'
+  
+        warnings:
+          type: 'array'
+          items:        
+            $ref: '#/components/schemas/Warning'
+
+        _links:
+          $ref: '#/components/schemas/BookingLinks'
+
+    AddressWithCountryName:
+      type: object
+      description: 'Address information'
+      properties:
+        address:
+          type: string
+          description: 'Main address of the participant.'
+          example: 'St-21.'
+          
+        additionalAddress: 
+          type: string
+          description: 'Additional address of the participant.'
+          example: 'Cargo Complex'
+          
+        zipCode:
+          type: string
+          description: 'The postal code of the address (zip code for USA). Eg. 8004 - for an address in Zurich, Switzerland, 75064 - for a zip code in Texas, USA.'
+          example: '75064'
+
+        city:
+          type: string
+          description: 'City of the address of the participant.'
+          example: 'Austin'
+          
+        stateOrProvince:
+          type: string
+          description: 'State (for United States only) of the address of the participant.'
+          example: 'TX'
+          
+        country:
+          $ref: '#/components/schemas/Country'
+
+    AdhocPrice:
+      type: object
+      description: 'For loose shipments, only one array item is expected unless there is a rate construction request. In the case of a rate construction request each array item will represent a unique ad hoc rate line. For ULD shipments each array item will correspond to a ULD.'
+      properties:
+
+        id:
+          type: string
+          description: 'Price sequence, unique Cargospot internal ID for the adhoc price.'
+          example: '22030'
+        
+        type:
+          type: string
+          description: 'Indicates the type of ad hoc. Possible values are Sell, Buy, Prorate. Only Sell ad hoc will be shared via API GW. UXR will receive all types.'
+          example: 'Prorate'
+
+        origin:
+          $ref: '#/components/schemas/Location'        
+
+        destination:
+          $ref: '#/components/schemas/Location'  
+
+        productCode:
+          type: string
+          description: 'Product describes a service offering from an airline. It encapsulates various additional services that the airline will undertake while transporting the shipment.'
+          example: 'Express' 
+
+        priceClassCode: 
+          type: string
+          description: 'Price class code (rating specific parameter).'
+          example: 'GENPAX'
+
+        allInRate:
+          type: boolean
+          description: 'Indicates that ad hoc rate includes with other charge amount or not. True - Ad hoc rate/kg includes with freight amount + Default Other charge amount. False indicates that rate includes only freight amount.'
+          example: false        
+
+        calculationWeightType:
+          type: string
+          enum:
+            - Chargeable          
+            - Gross
+          description: 'Code identifying a method to calculate selling total amount. Chargeable - Chargeable weight will be considered for calculation. Gross - Gross Weight will be considered for calculation.'
+          default: Chargeable
+          example: Gross 
+        
+        ULD:
+          $ref: '#/components/schemas/ULDForAdhocPrice'
+
+        currency:
+          $ref: '#/components/schemas/Currency'
+          
+        rate:
+          type: number
+          format: float
+          description: 'Rate amount. If SGD is currency and KG is the booking weight unit then SGD/KG. This is mandatory if loose shipments.'
+          example: 42.5
+           
+        chargePerULD:
+          type: number
+          format: float
+          description: 'Minimum charge per ULD. May have a value only for ULD ad hocs. 0 indicates that no charge has been specified.'
+          example: 60.00
+          
+        minimumCharge:
+          type: number
+          format: float
+          description: 'Minimum charge for the ad hoc. May have a value only for non-ULD ad hocs. 0 indicates that no charge has been specified.'
+          example: 60.00
+
+        ULDPivotWeight:
+          $ref: '#/components/schemas/Weight'
+
+        ULDOverPivotRate:
+          type: number
+          format: float
+          description: 'ULD over pivot rate.'
+          example: 42.5     
+           
+        contact: 
+          type: string
+          description: 'Contact details of the requestor.'
+          example: '+65 80000002'
+          
+        verificationStatus: 
+          type: boolean
+          description: 'Verification status of the adhoc price.'
+          example: true         
+
+        applicable: 
+          type: boolean
+          description: 'Applicablity of adhoc price.'
+          example: true
+
+        validity: 
+          type: boolean
+          description: 'Status of the adhoc price. If false price is cancelled.'
+          example: true   
+
+    Agent:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 'Unique Cargospot internal ID the agent/shipper/consignee.'
+          example: '81470000009'
+          
+        accountNumber:
+          type: string
+          description: 'Unique identifier for the agent/shipper/consignee.'
+          example: "81470000009"
+          
+        name:
+          type: string
+          description: 'Name of the participant.'
+          example: 'CSP Freight Forwarders'
+          
+        additionalName:
+          type: string
+          description: 'Additional name information for the participant.'
+          example: 'CHAMP Cargosystems'
+
+        shortName:
+          type: string
+          description: 'Abbreviation to quickly identify the participant. Alphanumeric code with 3-5 characters.'
+          example: 'CSP01'
+
+        clientType:
+          type: array
+          items:
+            type: string
+            enum:
+              - AGENT
+              - SHIPPER
+              - CONSIGNEE
+              - NOTIFIER
+              - STATION
+          description: 'Client type. This is an array with the following possible values which are comma separated - Agent,Shipper,Consignee,Notifier,Station.'
+          example: 'Agent' 
+
+        type:
+          type: string
+          enum:
+            - AGT
+            - SHP
+            - CNE
+            - AIR
+            - APT
+            - BRK
+            - CAG
+            - CTM
+            - DEC
+            - FFW
+            - GHA
+            - PTT
+            - TRK
+            - AMP
+            - AMF
+            - AMA
+          description: 'Participant type. This is an official IATA code that can be used to differentiate between participants. AGT - Agent, AIR - Airline, APT - Airport Authority, BRK - Broker, CNE - Consignee, CAG - Commissionable Agent, CTM - Customs, DEC - Deconsolidator, FFW - Freight Forwarder, GHA - Ground Handling Agent, PTT - Post Office, SHP- Shipper, TRK - Trucker. For Mail users the codes AMP, AMF and AMA can be used. AMP - Postal Authority, AMF - Mail Forwarder, AMA - Airline.'
+          example: 'AGT'
+
+        hierarchyType:
+          type: string
+          enum:
+           - Master
+           - Regional
+           - Global
+           - Local
+          description: 'Participant hierarchy type indicator. Default value is local.'
+          example: 'Master'
+          
+        branchCode:
+          type: string
+          description: 'Short name of the place where the agent branch is located.'
+          example: 'SIN'          
+
+        salesAreaCode:
+          type: string
+          description: 'Sales area to which the participant belongs to.'
+          example: 'SIN'
+
+        status:
+          type: string
+          enum:
+            - Active
+            - Old Code
+            - Black List
+            - Out of Business
+            - Inactive
+            - No Invoice
+            - Invoice
+            - Cash
+            - Debit Note
+            - Shipper Inv
+            - Tech Stores
+          description: 'Indicates the current status of the participant. This   may be used as an indicator for the restriction in the usage of the participant. Old code indicates that the participant cannot be used anymore. Black list indicates that business with the participant is already terminated. Out of business indicates that the participant is not in business anymore. Inactive. No invoice indicates that there is no invoice for this participant. Invoice indicates that the invoice of the participant will be used for general invoices. Cash indicates that the participant must pay cash. Debit note indicates that the client will be billed at the end of the month (forwarder version only). Shipper Inv indicates that any payment entered in the payment screen will be linked with the shipper shown in the AWB instead of the agent. Tech Stores.'
+          example: 'Active'
+
+        stockholder:
+          type: boolean
+          description: 'Indicates whether the participant holds stock or not. True indicates that the participant holds stock.'
+          example: true
+
+        agentGroups:
+          type: array
+          description: 'BSA agents of this participant. This will be applicable for specific airline instances.'
+          items:
+            $ref: '#/components/schemas/AgentGroup'
+
+    AgentGroup:
+      type: object
+      properties:
+        shortName:
+          type: string
+          description: 'Shortname of agent.'
+          example: 'BSA01'
+        type:
+          type: string
+          description: 'Type of agent.'
+          example: 'B'
+
+    AircraftType:
+      type: object
+      properties:
+        code:
+          type: string
+          description: 'Aircraft type code.'
+          example: '77W'
+        name:
+          type: string
+          description: 'Aircraft type name.'
+          example: 'Wide aircraft'    
+
+    AirWaybill:
+      type: object
+      description: 'Air waybill number related details.'
+      properties:  
+
+        prefix:
+          type: string
+          description: 'Coded representation of an airline.'
+          example: '950'
+
+        serial:
+          type: string
+          description: 'A serial number allocated by an airline to identify a particular air cargo shipment and the associated air waybill.'
+          example: '10203045'
+
+        type:
+          type: string
+          enum:
+           - REVENUE
+           - SERVICE
+           - VOID
+           - NO INVOICE
+           - PREPARED
+           - NO FREIGHT
+           - STAFF
+           - CREDIT
+           - DEBIT
+           - BOOK CN
+          description: 'Field to show the type of the air waybill. Possible values are REVENUE - Revenue cargo shipment, SERVICE - Non revenue service shipment, VOID - Voided air waybill, NO INVOICE - Excludes such an air waybill from invoicing, PREPARED - Setup the air waybill in the same way as a "REVENUE" air waybill except that such a record is not included for invoicing, NO FREIGHT - Air waybill without freight charges but with other charges only, STAFF - Air waybill with staff reduction, CREDIT - A credit record (storno of already invoiced amount), DEBIT - A debit record. Used to charge additional amounts after an initial invoice was already made, BOOK CN - When a booking is cancelled but the AWB should be kept. For this status, the air wybill number will be shown as free in the air waybill stock so the agent can use this air waybill number again. This is a reserved feature.'
+          default: REVENUE
+          example: SERVICE
+        
+        consolidation:
+          type: boolean
+          description: 'Indicates if air waybill is a consolidation or not, i.e. has house air waybills associated to this air waybill. True indicates consolidation.'
+          default: false
+          example: true
+
+        issuedOn:
+          type: string
+          format : date
+          description: 'Air waybill issue date.'
+          example: '2020-12-10'
+
+    AmountCharges:
+      type: object
+      properties:
+        amount:
+          type: number
+          format: float
+          description: 'The amount in the specified unit.'
+          example: 1205.5
+          
+        currency:
+          $ref: '#/components/schemas/Currency'
+
+    AVIDetails:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 'Unique Cargospot internal ID for this AVI data.'
+          example: '79809'      
+        remark:
+          type: string
+          description: 'AVI Remark.'
+          example: 'Specific remarks for AVI handling.'
+        species:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpeciesDetails'
+
+    BookingLinks:
+      type: object
+      properties:
+        self:
+          $ref: '#/components/schemas/HRefs'
+        edit:
+          $ref: '#/components/schemas/Edit'
+        cancel:
+          $ref: '#/components/schemas/Cancel'
+        SPAAdhoc:
+          $ref: '#/components/schemas/HRefs'        
+        notes:
+          $ref: '#/components/schemas/HRefs'
+        irregularities:
+          $ref: '#/components/schemas/HRefs'  
+        costs:
+          $ref: '#/components/schemas/HRefs'             
+
+    Cancel:
+      type: object
+      properties:
+        href:
+          type: string
+          example: '/{resource} . . .'
+        templated:
+          type: boolean
+
+    Carrier:
+      type: object
+      properties:
+        code:
+          type: string
+          description: 'ICAO airline designator, coded identification for a carrier.'
+          example: 'XS'
+        
+        name:
+          type: string
+          description: 'Name of the airline.'
+          example: 'Champ Airlines'
+
+    ChargeEstimate:
+      type: object
+      properties:
+        grossFreightCharge:
+          $ref: '#/components/schemas/GrossFreightCharge'
+        tax:
+          $ref: '#/components/schemas/Tax'
+        otherCharge:
+          $ref: '#/components/schemas/OtherCharge'
+        freightCharge:
+          $ref: '#/components/schemas/FreightCharge'
+
+    ChargeEstimateWithCredit:
+      type: object
+      properties:
+        grossFreightCharge:
+          $ref: '#/components/schemas/GrossFreightCharge'
+        tax:
+          $ref: '#/components/schemas/Tax'
+        otherCharge:
+          $ref: '#/components/schemas/OtherCharge'
+        freightCharge:
+          $ref: '#/components/schemas/FreightCharge'
+        availableCredit:
+          $ref: '#/components/schemas/AmountCharges'
+        creditTolerance:
+          $ref: '#/components/schemas/AmountCharges'
+
+    Cost:
+      type: object
+      properties:
+        type:
+          type: string
+          description: 'The type of the cost (possible values in the enum)'
+          example: 'Export'
+          enum:
+            - Export
+            - Import
+            - Transit
+            - Trucking
+            - Auxiliary
+        airport:
+          $ref: 'https://api.swaggerhub.com/domains/CHAMP-Cargo-Systems/cargospot-components/v1#/components/schemas/LocationCodeType'
+        truckingDestination:
+          $ref: 'https://api.swaggerhub.com/domains/CHAMP-Cargo-Systems/cargospot-components/v1#/components/schemas/LocationCodeType'
+        truckingOrigin:
+          $ref: 'https://api.swaggerhub.com/domains/CHAMP-Cargo-Systems/cargospot-components/v1#/components/schemas/LocationCodeType'
+        chargeableWeight:
+          $ref: '#/components/schemas/ChargeableWeight'
+        minimumCharge:
+          $ref: 'https://api.swaggerhub.com/domains/CHAMP-Cargo-Systems/cargospot-components/v1#/components/schemas/AmountCharges'
+        rate:
+          $ref: 'https://api.swaggerhub.com/domains/CHAMP-Cargo-Systems/cargospot-components/v1#/components/schemas/AmountCharges'
+        totalAmount:
+          $ref: 'https://api.swaggerhub.com/domains/CHAMP-Cargo-Systems/cargospot-components/v1#/components/schemas/AmountCharges'
+        remark:
+          type: string
+          description: 'Remark about the cost.'
+          example: 'This is a cost remark'
+        truckCode:
+          type: string
+          description: 'Indicates the code of the trucking company for which the cost applies.'
+          example: 'CSW'
+        reference:
+          type: object
+          properties:
+            id:
+              type: string
+              description: 'Cost identifier in Cargospot.'
+              example: '1234'
+            type: 
+              type: string
+              description: 'The type of the cost: handling or trucking'
+              example: 'Trucking'
+              enum:
+                - Handling
+                - Trucking
+        
+    Country:
+      type: object
+      properties:
+        code:
+          type: string
+          description: 'ISO 2-letter country code. This indicates the country of the address of the participant.'
+          example: 'US'
+          
+        name:
+          type: string
+          description: 'Country name.'
+          example: 'United States of America'
+
+    Currency:
+      type: object
+      properties:
+        code:
+          type: string
+          description: 'Currency code.'
+          example: 'SGD'
+          
+        name:
+          type: string
+          description: 'Currency name.'
+          example: 'Singapore Dollar'   
+
+    CustomsAndSecurityInformationDetails:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 'Unique Cargospot internal ID for this customs and security information.'
+          example: '31250'
+          
+        countryCode:
+          type: string
+          description: 'Country code. One of country code, informationIdentifier or controlInformationCode is mandatory.'
+          example: 'US'
+        
+        informationIdentifier:
+          type: string
+          description: 'OCI info ID that exists in Cargospot. This parameter allows 0 or 3 alpha characters. Examples: AGT, SSI, ABI. One of country code, informationIdentifier or controlInformationCode is mandatory.'
+          example: 'SSI'
+        
+        controlInformationCode:
+          type: string
+          description: 'Customs code used for transmitting/receiving OCI data. This parameter allows 0, 1, 2 or 3 alpha characters. Examples - SCO, CB, F. One of country code, informationIdentifier or controlInformationCode is mandatory.'
+          example: 'SPX'
+        
+        supplementaryControlInformation:
+          type: string
+          description: 'This parameter allow alpha-numeric characters, and a dash ( - ) and a dot ( . ) characters, with a maximum of 35 characters free text.'
+          example: 'Note for US - customs.'
+
+    DimensionsWithVolume:
+      type: object
+      properties:
+        measurements:
+          type: array
+          items:        
+            $ref: '#/components/schemas/MeasurementsWithVolume'        
+        unit:
+          type: string
+          description: 'Unit for length, width and height. CMT indicates centimeters; INH indicates inches.'
+          enum: 
+           - CMT
+           - INH
+          example: 'CMT'
+
+    DryIceDetails:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 'Unique Cargospot internal ID for this dry ice information.'
+          example: '7980'
+          
+        pieces:
+          type: integer
+          format: int32
+          description: "Number of pieces which the user plan to enter the dry ice weight."
+          example: 1
+
+        weightPerPiece:
+          $ref: '#/components/schemas/Weight'
+          
+        totalWeight:
+          $ref: '#/components/schemas/Weight'
+
+    Edit:
+      type: object
+      properties:
+        href:
+          type: string
+          example: '/{resource} . . .'
+        templated:
+          type: boolean
+
+    EmergencyContactDetails:
+      type: object
+      properties: 
+        id:
+          type: string
+          description: 'Unique Cargospot internal ID for emergency contact'
+          example: '7880'      
+        name:
+          type: string
+          description: 'Name of the emergency contact person.'
+          example: 'Jackson'
+        phoneNumber:
+          type: string
+          description: 'Phone number for the emergency contact.'
+          example: '+65 81234567'        
+        email:
+          type: string
+          description: 'E-mail id for emergency contact.'
+          example: 'jack@champ.aero'   
+
+    HRefs:
+      type: object
+      properties:
+        href:
+          type: string
+          example: /{resource} . . .
+        templated:
+          type: boolean
+
+    IATADetails:
+      type: object
+      description: 'This parameter will only work with specific airline instances.'
+      properties:
+        id:
+          type: string
+          description: 'Unique Cargospot internal ID for this Iata line details.'
+          example: '7989899'
+          
+        pieces:
+          type: integer
+          format: int32
+          description: 'pieces'
+          example: 1
+          
+        weight:
+          $ref: '#/components/schemas/Weight'
+          
+        service:
+          type: string
+          description: 'Service'
+          example: 'Service'
+          
+        class:
+           type: string
+           description: 'Class'
+           example: 'Class'
+           
+        commodity:
+           type: string
+           description: 'Commodity'
+           example: 'commodity'
+           
+        chargeableWeight:
+          $ref: '#/components/schemas/ChargeableWeight'
+          
+        rate:
+          $ref: '#/components/schemas/AmountCharges'
+          
+        total:
+           $ref: '#/components/schemas/AmountCharges'
+           
+        goodsType:
+           type: string
+           description: 'Goods type'
+           example: 'G'
+           
+        natureOfGoods:
+          type: string
+          description: 'Nature of Goods'
+          example: 'Nature of Goods 1'
+          
+        ULDType:
+          type: string
+          description: 'Type of the ULD.'
+          example: 'PMC'  
+          
+    GrossFreightCharge:
+      type: object
+      properties:
+        weightCharge:
+          $ref: '#/components/schemas/PrepaidCollectAmounts'
+        valuationCharge:
+          $ref: '#/components/schemas/PrepaidCollectAmounts'
+        otherChargesDueAgent:
+          $ref: '#/components/schemas/PrepaidCollectAmounts'
+        otherChargesDueCarrier:
+          $ref: '#/components/schemas/PrepaidCollectAmounts'
+        totalCharges:
+          $ref: '#/components/schemas/PrepaidCollectAmounts'
+          
+    PrepaidCollectAmounts:
+      type: object
+      properties:
+        prepaid:
+          $ref: '#/components/schemas/AmountCharges'
+        
+        collect:
+          $ref: '#/components/schemas/AmountCharges'
+          
+    Tax:
+      type: object
+      properties:
+        dueAgent:
+          $ref: '#/components/schemas/AmountCharges'
+        
+        dueCarrier:
+          $ref: '#/components/schemas/AmountCharges'
+          
+    OtherCharge:
+      type: object
+      properties:
+        fuel:
+          $ref: '#/components/schemas/AmountCharges'
+        
+        security:
+          $ref: '#/components/schemas/AmountCharges'
+          
+        dueCarrier:
+          $ref: '#/components/schemas/AmountCharges'
+          
+        total:
+          $ref: '#/components/schemas/AmountCharges'
+          
+    FreightCharge:
+      type: object
+      properties:
+        grossRate:
+          $ref: '#/components/schemas/AmountCharges'
+        
+        grossTotal:
+          $ref: '#/components/schemas/AmountCharges'
+          
+        sellRate:
+          $ref: '#/components/schemas/AmountCharges'
+          
+        sellTotal:
+          $ref: '#/components/schemas/AmountCharges'
+          
+        appliedPrice:
+          type: string
+          description: 'This is the type of price that has been applied to the shipment.'
+          example: 'Market Rate'
+
+        priceIdentifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/PriceIdentifier'
+          
+        totalSelling:
+          $ref: '#/components/schemas/AmountCharges'
+          
+        allIn:
+          type: boolean
+          description: 'All-in rate when True, indicates that the Freight rate is inclusive of one or more Other Charges. When All-in Rate is False then this means that Other Charge rates are additional to the Freight rate.'
+          example: false
+          
+    IrregularityResource:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 'Unique Cargospot internal ID for this irregularity.'
+          example: '12345'
+        stationCode:
+          type: string
+          description: 'The station where the irregularity is declared.'
+          example: 'SIN'
+        irregularityCode:
+          $ref: '#/components/schemas/IrregularityCode'
+        uldNumber:
+          type: string
+          description: 'ULD reference number.'
+          example: 'AKE1234XS'
+        remark:
+          type: string
+          description: 'A description of the irregularity and why it was created.'
+          example: 'The flight was changed.'
+        claim:
+          $ref: '#/components/schemas/Claim'
+  
+    Claim:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ClaimType'
+        amount:
+          $ref: '#/components/schemas/AmountCharges'
+        paidAmount:
+          $ref: '#/components/schemas/AmountCharges'
+        pieces:
+          type: integer
+          description: 'Number of pieces'
+          example: 2
+        liableStationCode:
+          type: string
+          description: 'Code of the station liable for the claim.'
+        openDate:
+          type: string
+          format: date
+          description: 'Date when the claim is opened.'
+          example: '2021-09-30'
+        closeDate:
+          type: string
+          format: date
+          description: 'Date when the claim is closed.'
+          example: '2021-09-31'
+          
+    ClaimType:
+      type: object
+      properties:
+        code: 
+          type: string
+          description: 'The type of the claim.'
+          example: 'PRE'
+        name:
+          type: string
+          description: 'Name of the claim type.'
+          example: 'Preliminary'
+
+    UpdatedClaim:
+      type: object
+      properties:
+        type:
+          type: string
+          description: 'The type of the claim.'
+          example: 'PRE'
+        amount:
+          type: number
+          format: float
+          description: 'The claim amount.'
+          example: 1205.5 
+        paidAmount:
+          type: number
+          format: float
+          description: 'The amount that was paid.'
+          example: 1205.5
+        pieces:
+          type: integer
+          description: 'Number of pieces'
+          example: 2
+        liableStationCode:
+          type: string
+          description: 'Code of the station liable for the claim.'
+        openDate:
+          type: string
+          format: date
+          description: 'Date when the claim is opened.'
+          example: '2020-09-05'
+        closeDate:
+          type: string
+          format: date
+          description: 'Date when the claim is closed.'
+          example: '2020-09-05'
+
+    IrregularityCode:
+      type: object
+      properties:
+        code:
+          type: string
+          description: 'The Cargospot irregularity code that contributes identifying the irregularity.'
+          example: '120'
+        carrierCode:
+          type: string
+          description: 'Coded identification approved by IATA for a carrier, linked to the transport means (flight/truck).'
+          example: 'XS'
+        name:
+          type: string
+          description: 'A description for the irregularity code.'
+          example: 'Missing Parts'
+
+    NewOrUpdatedIrregularityResource:
+      type: object
+      required:
+        - irregularityCode
+        - stationCode
+      properties:
+        id:
+          type: string
+          description: 'Unique Cargospot internal ID for this irregularity (in case of update). Not provided in case of new irregularity.'
+          example: '12345'
+        stationCode:
+          type: string
+          description: 'The station where the irregularity is declared.'
+          example: 'SIN'
+        irregularityCode:
+          type: string
+          description: 'The Cargospot irregularity code that contributes identifying the irregularity.'
+          example: '120'
+        carrierCode:
+          type: string
+          description: 'Coded identification approved by IATA for a carrier, linked to the transport means (flight/truck).'
+          example: 'XS'
+        remark:
+          type: string
+          description: 'A description of the irregularity and why it was created.'
+          example: 'The flight was changed.'
+        claim:
+          $ref: '#/components/schemas/UpdatedClaim'
+          
+    Location:
+      type: object
+      properties:
+        code:
+          type: string
+          description: '3-letter-IATA code of the location.'
+          example: 'SIN'
+          
+        type:
+          type: string
+          enum:
+            - AIRPORT
+            - CITY
+          description: 'Indicates if airport or city.'
+          example: 'AIRPORT'
+          
+        name:
+          type: string
+          description: 'Full name of the location.'
+          example: 'Changi International Airport'
+          
+        timeArea:
+          type: string
+          description: 'Time area'
+          example: 'Asia/Singapore'
+          
+        utcOffset:
+          type: integer
+          format: int32
+          description: 'This is the UTC offset for this airport/city as on the date/time at which the response was created.'
+          example: 480
+
+    MeasurementsWithVolume:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 'Unique Cargospot internal ID for this measurement.'
+          example: '31250'      
+        pieces:
+          type: integer
+          description: 'Pieces'
+          example: 1
+        weight:
+          $ref: '#/components/schemas/Weight'
+        length:
+          type: integer
+          description: 'Length.'
+          example: 100
+        width:
+          type: integer
+          description: 'Width.'
+          example: 80          
+        height:
+          type: integer
+          description: 'Height.'
+          example: 60
+        volume:
+          $ref: '#/components/schemas/Volume'  
+
+    OCIDetails:
+      type: object
+      properties:
+
+        otherCustomsInformation:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomsAndSecurityInformationDetails'
+            
+        securityDeclarations:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomsAndSecurityInformationDetails'
+
+    Participant:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 'Unique Cargospot internal ID the agent/shipper/consignee.'
+          example: '81470000009'
+          
+        accountNumber:
+          type: string
+          description: 'Unique identifier for the agent/shipper/consignee.'
+          example: "81470000009"
+          
+        name:
+          type: string
+          description: 'Name of the participant.'
+          example: 'CSP Freight Forwarders'
+          
+        additionalName:
+          type: string
+          description: 'Additional name information for the participant.'
+          example: 'CHAMP Cargosystems'
+
+        shortName:
+          type: string
+          description: 'Abbreviation to quickly identify the participant. Alphanumeric code with 3-5 characters.'
+          example: 'CSP01'
+
+        clientType:
+          type: array
+          items:
+            type: string
+            enum:
+              - AGENT
+              - SHIPPER
+              - CONSIGNEE
+              - NOTIFIER
+              - STATION
+          description: 'Client type. This is an array with the following possible values which are comma separated - Agent,Shipper,Consignee,Notifier,Station.'
+          example: 'Agent' 
+
+        type:
+          type: string
+          enum:
+            - AGT
+            - SHP
+            - CNE
+            - AIR
+            - APT
+            - BRK
+            - CAG
+            - CTM
+            - DEC
+            - FFW
+            - GHA
+            - PTT
+            - TRK
+            - AMP
+            - AMF
+            - AMA
+          description: 'Participant type. This is an official IATA code that can be used to differentiate between participants. AGT - Agent, AIR - Airline, APT - Airport Authority, BRK - Broker, CNE - Consignee, CAG - Commissionable Agent, CTM - Customs, DEC - Deconsolidator, FFW - Freight Forwarder, GHA - Ground Handling Agent, PTT - Post Office, SHP- Shipper, TRK - Trucker. For Mail users the codes AMP, AMF and AMA can be used. AMP - Postal Authority, AMF - Mail Forwarder, AMA - Airline.'
+          example: 'AGT'
+
+        heirarchyType:
+          type: string
+          enum:
+           - Master
+           - Regional
+           - Global
+           - Local
+          description: 'Participant hierarchy type indicator. Default value is local.'
+          example: 'Master'
+          
+        branchCode:
+          type: string
+          description: 'Short name of the place where the agent branch is located.'
+          example: 'SIN'          
+
+        salesAreaCode:
+          type: string
+          description: 'Sales area to which the participant belongs to.'
+          example: 'SIN'
+
+        status:
+          type: string
+          enum:
+            - Active
+            - Old Code
+            - Black List
+            - Out of Business
+            - Inactive
+            - No Invoice
+            - Invoice
+            - Cash
+            - Debit Note
+            - Shipper Inv
+            - Tech Stores
+          description: 'Indicates the current status of the participant. This   may be used as an indicator for the restriction in the usage of the participant. Old code indicates that the participant cannot be used anymore. Black list indicates that business with the participant is already terminated. Out of business indicates that the participant is not in business anymore. Inactive. No invoice indicates that there is no invoice for this participant. Invoice indicates that the invoice of the participant will be used for general invoices. Cash indicates that the participant must pay cash. Debit note indicates that the client will be billed at the end of the month (forwarder version only). Shipper Inv indicates that any payment entered in the payment screen will be linked with the shipper shown in the AWB instead of the agent. Tech Stores.'
+          example: 'Active'
+
+        address:
+          $ref: '#/components/schemas/AddressWithCountryName'
+          
+        contact:
+          $ref: '#/components/schemas/Contact'
+
+    PriceIdentifier:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 'Unique Cargospot internal ID of the price.'
+          example: '81470000009'
+
+        type:
+          type: string
+          enum:
+            - Sell Price
+            - Sell Ad-Hoc
+          description: 'Sell Price type.'
+          example: 'Sell Price'
+
+    Remarks:
+      type: object
+      properties:
+        source:
+          type: string
+          description: 'Source of the remarks. Possible values are FWB, FBL etc.'
+          example: 'FBL'    
+          
+        remarks:
+          type: string
+          description: 'Remarks.'
+          example: 'Shippers certification for live animals.'  
+
+    SalesArea:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 'Unique Cargospot internal ID.'
+          example: 'SIN001'
+        code:
+          type: string
+          description: 'Sales area Code'
+          example: 'SIN'
+        countryCode:
+          type: string
+          description: 'Sales area country Code'
+          example: 'SG'
+        name:
+          type: string
+          description: 'Sales area Name'
+          example: 'Bangalore'
+
+    SegmentDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 'Unique Cargospot internal ID for this segement.'
+          example: '31280'
+          
+        origin:
+          $ref: '#/components/schemas/Location'  
+
+        destination:
+          $ref: '#/components/schemas/Location'  
+
+        transportMeans:
+          $ref: '#/components/schemas/TransportMeansDetail'
+
+        bookingClosedOn:
+          type: string
+          format: dateTime
+          description: 'UTC Date and time in ISO8601 format when the booking is closed for this segment.'
+          example: '2020-09-05T21:00:00.000Z'
+
+        allocation:
+          $ref: '#/components/schemas/SpaceAllocation'    
+          
+        bookingCode:
+          type: string
+          description: 'Booking confirmation status code. Possible values are Auto Confirmed and Force Confirmed.'
+          example: 'Auto Confirmed'          
+
+        allotmentCode:
+          type: string
+          description: 'Allotment Code.'
+          example: 'CSPALLOT81'
+
+        pieces:
+          type: integer
+          format: int32
+          description: 'Total number of pieces'
+          example: 45
+
+        weight:
+          $ref: '#/components/schemas/Weight'  
+
+        volume:
+          $ref: '#/components/schemas/Volume'  
+
+        actionStatusCode:
+          type: string
+          description: 'Three letter action status code. The status of the movement either by external messages (FFM etc.) or by changes of the internal booking status (change of space Allocation codes). Possible values are BKD - Booked (if allocation code is KK, HK, CA), HLD - Hold (if allocation code is NN, NA), WAT - Wait (if allocation code is LL), XXX - Pending (no flight entered or any other status), FBL - Adviced (load advice created and sent to handling agent), DEP - Departed (flight has departed, automatically set by FFM message from handler), RCF - Received at destination, DLV - Delivered.'
+          example: 'XXX'
+          
+        actionStatusValue:
+          type: string
+          description: 'Value of the action status code.'
+          example: 'Pending (no flight entered or any other status).'
+          
+        receivedPieces:
+          type: integer
+          format: int32
+          description: 'Pieces actually arrived at the handling agent. Received through the FSU/RCS message.'
+          example: 45
+        
+        dryIcePieces:
+          type: integer
+          format: int32
+          description: "Number of pieces which the user plan to enter the Dry Ice weight. This parameter will only work with specific airline instances."
+          example: 1          
+        dryIceWeight:
+          $ref: '#/components/schemas/DryIceWeight'  
+
+        ULDs:
+          type: array
+          items:
+            $ref: '#/components/schemas/UpdatedULD'
+
+    SpaceAllocation:
+      type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - CA
+            - HK
+            - HL
+            - HN
+            - KK
+            - LL
+            - NA
+            - NL
+            - NN
+            - SS
+            - UN
+            - UU
+            - QU
+            - KL
+            - KC
+            - LA
+            - XX
+            - OF
+            - NS
+            - CN
+          description: 'Space allocation codes used for booking. Possible values are CA - Space allocation against allotment, HK - Holding confirmed, HL - Holding Wait List, HN - Have requested space allocation, KK - Confirming, LL - Wait list, NA - Requesting space allocation; if not available will accept alternative, NL - Requesting space allocation; for wait list, NN - Requesting space allocation; will not accept alternative, SS - Reporting Sale, UN - No confirmation, UU - Unable to confirm space, QU - Unable to confirm queue to FCTL, KL - Wait list confirmed, KC - Wait list confirmed, LA - Stand by virtual pending confirm, XX - Cancel previous space allocation, OF â€“ Offload, NS â€“ No Show, CN - Cancellation noted.'
+          example: 'KK'
+        description:
+          type: string
+          description: 'Space allocation code description.'
+          example: 'Confirming'  
+
+    SpecialHandlingCode:
+      type: object
+      properties:
+        code:
+          type: string
+          description: 'Special handling code.'
+          example: 'AVI'
+        description:
+          type: string
+          description: 'Space handling code description.'
+          example: 'Live animals' 
+
+    SpeciesDetails:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 'Unique Cargospot internal ID for this species details.'
+          example: '79809'      
+        name:
+          type: string
+          description: 'Name of the species.'
+          example: 'Dog'
+        quantity:
+          type: integer
+          format: int32
+          description: 'Number.'
+          example: 6
+
+    TemperatureDetails:
+      type: object
+      description: 'Temperature range in degree Celsius.'
+      properties:
+        id:
+          type: string
+          description: 'Unique Cargospot internal ID for the temperature details.'
+          example: '718980'      
+        type:
+          type: string
+          enum:
+            - Product
+            - Storage
+          description: 'Type; product, storage temperature.'
+          example: 'Product'
+        minimum:
+          type: number
+          format: float
+          description: 'Minimum temperature in degree Celsius.'
+          example: âˆ’5.25
+        maximum:
+          type: number
+          format: float
+          description: 'Maximum temperature in degree Celsius.'
+          example: 5.25
+
+    TransportMeansDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 'Unique Cargospot internal ID for this transport.'
+          example: '21251156'
+
+        reference:
+          type: string
+          description: 'Business reference for this transport'
+          example: 'XS481A/06SEP'
+
+        carrier:
+          $ref: '#/components/schemas/Carrier'        
+
+        number:
+          type: string
+          description: 'Reference number for this transport (e.g. flight number). Format : nnn(n)(a)'
+          example: '481A'
+
+        date:
+          type: string
+          format: date
+          description: 'Reference date for this transport. Format: YYYY-MM-DD.'
+          example: '2020-09-06'
+          
+        mode:
+          type: string
+          enum:
+            - AIR
+            - ROAD
+            - SEA
+            - RAIL
+          description: 'mode of transport'
+          example: 'AIR'          
+
+        scheduledDeparture:
+          type: string
+          format: dateTime
+          description: 'Scheduled time of departure - STD.'
+          example: '2020-09-06T01:00:00+08:00'
+
+        scheduledArrival:
+          type: string
+          format: dateTime
+          description: 'Scheduled time of arrival - STA.'
+          example: '2020-09-06T23:45:00-04:00'
+
+        aircraftType:
+          $ref: '#/components/schemas/AircraftType'
+          
+        _links:
+          $ref: '#/components/schemas/HRefs' 
+
+    ULDDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 'Unique Cargospot internal ID for this ULD.'
+          example: '718980'
+      
+        number:
+          type: string
+          description: 'Indicates the full ULD number that includes the ULD type (eg. AKE), ULD number (eg. 12345) and carrier code (eg. XS). If the ULD number is not available this field can also just capture the ULD type. Either number or type should be specified.'
+          example: 'AKE48101XS'
+
+        type:
+          type: string
+          description: 'Customer defined ULD type code as available in the specific Cargospot instance. Either number or type should be specified.'
+          example: 'AKE'
+
+        count:
+          type: number
+          description: 'Count of ULDs. This parameter will be displayed only for specific Cargospot instances using this feature.'
+          example: 1     
+
+        ULDSegment:
+          $ref: '#/components/schemas/ULDSegment'  
+
+        loadIndicator:
+          type: string
+          enum:
+            - M
+            - L
+            - N
+            - U
+            - R
+          description: 'Indicates where the ULD can be loaded on the airplane. Possible values M - Main deck loading only, N - Nose door loading only, L - ULD height below 160 centimetres, U -  ULD height between 160 and 244 centimetres, R - ULD height above 244 centimetres.'
+          example: 'L'
+
+        bookedWeight:
+          $ref: '#/components/schemas/Weight'
+
+        bookedVolume:
+          $ref: '#/components/schemas/Volume'        
+
+        usedVolume:
+          $ref: '#/components/schemas/Volume'      
+
+        dryIceWeight:
+          $ref: '#/components/schemas/DryIceWeight' 
+
+        contourCode:
+          type: string
+          description: 'ULD contour code that exists in Cargospot. Code indicating the exact contour of a ULD including its footprint.'
+          example: 'Q6'
+          
+        shipperBuiltUnit:
+          type: boolean
+          description: 'Indicates if the container is shipper built unit or not. This parameter will only work with specific airline instances.'
+          example: true
+
+    ULDSegment:
+      type: object
+      description: Flight segment.
+      properties:
+        id:
+          type: string
+          description: 'Unique Cargospot internal ID for this ULD segment information.'
+          example: '718980'
+          
+        originAirportCode:
+          type: string
+          description: 'Segment origin of this resource. Location at which cargo is loaded to this booking segment.'
+          example: 'SIN'
+          
+        destinationAirportCode:
+          type: string
+          description: 'Segment destination of this resource. Location at which cargo is offloaded from this booking segment.'
+          example: 'JFK'    
+
+        carrierCode:
+          type: string
+          description: 'Coded identification approved by IATA for a carrier, linked to the transport means (flight/truck).'
+          example: 'XS'        
+
+        number:
+          type: string
+          description: 'Reference number for this transport (e.g. flight number). Format: nnn(n)(a). This is optional only for UXR.'
+          example: '481A'
+
+        date:
+          type: string
+          format: date
+          description: 'Reference date for this transport. Format: YYYY-MM-DD. This is optional only for UXR.'
+          example: '2020-09-06'
+
+        reference:
+          type: string
+          description: 'business reference for this transport'
+          example: 'XS481A/06SEP'
+
+    EstimationRequestDetails:
+      required:
+      - "issueCarrierCode"
+      - "freightChargeType"
+      - "agentId"
+      - "bookedWeight"
+      - "destinationCode"
+      - "originCode"
+      - "segments"
+      - "currencyCode"
+      type: "object"
+      properties:
+        issueCarrierCode:
+          type: string
+          description: 'Issuing carrier two- or three-character code. Specify this field only if the issuing carrier is different from the airline linked to air waybill prefix.'
+          example: 'XS'
+        productCode:
+          type: string
+          description: 'Product code that exists in Cargospot. Product describes a service offering from an airline. It encapsulates various additional services that the airline will undertake while transporting the shipment.'
+          example: 'Express'
+        priceClassCode: 
+          type: string
+          description: 'Price class code (rating specific parameter) that exists in Cargospot.'
+          example: 'GENPAX'
+        freightChargeType:
+          type: string
+          enum:
+            - Prepaid
+            - Collect
+          description: 'Code indicating whether payment will be made at origin (prepaid) or at destination (collect) for freight charges.'
+          default: Prepaid
+          example: "Prepaid"
+        agentId:
+          type: "string"
+          description: "Unique Cargospot internal ID for the agent."
+          example: "81470000009"
+        originCode:
+          $ref: "#/components/schemas/EstimationLocationCode"
+        destinationCode:
+          $ref: "#/components/schemas/EstimationLocationCode"
+        segments:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/EstimationSegmentDetails"
+        containers:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/EstimationContainer"
+        specialHandlingCodes:
+          maxItems: 9
+          type: "array"
+          items:
+            type: string
+            description: 'Special handling code to identify type of cargo.' 
+            example: 'AVI'
+        logisticsPackages:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/EstimationDimensions"
+        bookedWeight:
+          $ref: "#/components/schemas/Weight"
+        bookedVolume:
+         type: object
+         description: 'bookedVolume is Conditional. if dimensions are present in logistics package then booked volume should not be present else booked volume is mandatory.'
+         properties:
+           amount:
+             type: number
+             description: 'Volume. Volume will be mandatory for specific airlines based on the configuration in Cargospot.'
+             format: float
+             example: 24
+           unit:
+             type: string
+             description: 'Volume unit. MC indicates cubic metre; CF indicates cubic feet.'
+             example: MC
+             enum:
+             - MC
+             - CF
+        valueCarriage:
+          type: "number"
+          description: "The declared value of carriage."
+          format: "float"
+          example: 1.2E+5
+        bookedPieces:
+          type: "integer"
+          description: "Number of pieces."
+          format: "int32"
+          example: 6
+        currencyCode:
+          type: "string"
+          description: "Currency Code."
+          example: "SGD"
+    EstimationLocationCode:
+      type: "string"
+      description: "Coded representation of a specific airport/city code."
+      example: "NRT"
+    EstimationSegmentDetails:
+      required:
+      - "offloadCode"
+      - "onloadCode"
+      - "transportMeans"
+      type: "object"
+      properties:
+        onloadCode:
+          $ref: "#/components/schemas/EstimationLocationCode"
+        offloadCode:
+          $ref: "#/components/schemas/EstimationLocationCode"
+        transportMeans:
+          $ref: "#/components/schemas/EstimationTransportMeansResource"
+    EstimationContainer:
+      required:
+      - "containerType"
+      - "bookedWeight"
+      type: "object"
+      properties:
+        containerType:
+          type: "string"
+          description: "Customer defined ULD type code as available in the specific\
+            \ Cargospot instance."
+          example: "AKE"
+        bookedWeight:
+          $ref: "#/components/schemas/Weight"
+    EstimationTransportMeansResource:
+      required:
+      - "carrierCode"
+      - "date"
+      type: "object"
+      properties:
+        carrierCode:
+          type: "string"
+          description: "ICAO airline designator, coded identification for a carrier."
+          example: "XS"
+        transportNumber:
+          type: "string"
+          description: "Reference number for this transport (e.g. flight number).\
+            \ Format : nnn(n)(a)."
+          example: "481A"
+        date:
+          type: "string"
+          description: "Reference date for this transport. Format: YYYY-MM-DD."
+          format: "date"
+          example: "2020-09-06"
+    EstimationDimensions:
+      required:
+      - "height"
+      - "length"
+      - "pieces"
+      - "width"
+      type: "object"
+      properties:
+        pieces:
+          type: "integer"
+          description: "Pieces"
+          format: "int32"
+          example: 1
+        weight:
+          $ref: "#/components/schemas/Weight"
+        length:
+          type: "integer"
+          description: "Length in centimeters."
+          format: "int32"
+          example: 150
+        width:
+          type: "integer"
+          description: "Width in centimeters."
+          format: "int32"
+          example: 150
+        height:
+          type: "integer"
+          description: "Height in centimeters."
+          format: "int32"
+          example: 150
+        unit:
+          type: string
+          description: 'Unit for length, width and height. CMT indicates centimeters; INH indicates inches.'
+          enum: 
+           - CMT
+           - INH
+          default: CMT
+          example: 'CMT'
+    Warning:
+      type: object
+      properties:
+        message:
+          type: string
+          description: 'Warning message.'
+          example: 'Soft warning message'
+        createdBy:
+          type: string
+          description: 'User info.'  
+          example: 'SYSTEM'
+        createdOn:
+          type: string
+          format: dateTime
+          description: 'UTC Date and time in ISO8601 format when the booking is created.'
+          example: '2020-06-25T14:30:00.000Z'
+
+    ErrorResponse:
+      type: object
+      properties:
+        globalErrors:
+          type: array
+          items:        
+            $ref: '#/components/schemas/GlobalError'
+        fieldErrors:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldError'
+
+    GlobalError:
+      type: object
+      properties:
+        code:
+          type: string
+          example: 'booking.create'
+        userMessage:
+          type: string
+          example: 'Booking cannot be created.'
+        fields:
+          type: array
+          items:
+            type: string
+            example: 'specialHandlingCodes'
+
+    FieldError:
+      type: object
+      properties:
+        fieldName:
+          type: string
+          example: 'specialHandlingCodes'
+        rejectedValue:
+          type: string
+          example: 'AVI'
+        userMessage:
+          type: string
+          example: 'Embargo for live animals at destination airport.'
+        code:
+          type: string
+          example: code.pattern
+
+  parameters:
+
+    page:
+      name: page
+      in: query
+      description: 'Use the page and size parameters to control the pagination of results. The size parameter determines the number of results included in a single response. The page parameter determines the specific page that is returned, zero indicates page one. If you specify the size as 20, then a 50-record response will be split across 3 responses; if you specify page as 2, then the records 41 to 50 will be returned.'
+      schema:
+        type: integer
+        format: int32
+        
+    size:
+      name: size
+      in: query
+      description: 'Use the page and size parameters to control the pagination of results. The size parameter determines the number of results included in a single response. The page parameter determines the specific page that is returned, zero indicates page one. If you specify the size as 20, then a 50-record response will be split across 3 responses; if you specify page as 2, then the records 41 to 50 will be returned.'
+      schema:
+        type: integer
+        format: int32
+        
+    sort:
+      name: sort
+      in: query
+      description: 'Used to specify the sorting parameter (from the response) and the sorting order (ASC for ascending and DESC for descending). Default sort order is ascending, and multiple sort criteria can be specified. The full format is - sort=parameter, asc/desc. For example, to specify two sort criteria, you can use - sort=transportNumber,DESC&sort=id,ASC.'
+      style: form
+      explode: true
+      schema:
+        type: array
+        items:
+          type: string
+
+    if-match:
+      name: If-Match
+      in: header
+      description: 'Makes the request conditional. Helps to prevent the lost update problem by ensuring that your request will not override another change done since the original resource was retrieved. In this parameter, specify the Etag returned in the header of the GET by {id} method for this resource. HTTP 412 response will be returned if the Etag value is not valid.'
+      required: true
+      schema:
+        type: string
