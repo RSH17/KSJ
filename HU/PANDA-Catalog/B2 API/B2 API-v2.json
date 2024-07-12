@@ -43,7 +43,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/EstimationRequestDetails"
+                "$ref": "https://xapihub.io/models/LIFE/SHIFU-Catalog/OCP-model/v1/#/components/SCHEMAS/ErrorResponse"
               }
             }
           },
